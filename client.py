@@ -2,6 +2,8 @@ import socket
 import threading
 import sys
 import config as cg
+from message import UserLoginMessage
+import json
 
 class Client:
     def __init__(self, sock):
@@ -18,9 +20,7 @@ class Client:
                     self.running = False
                     break
                 
-                # Print the server's update immediately
                 print(f"\n[SERVER UPDATE] {data.decode()}")
-                # Print a fresh prompt marker so the user knows they can still type
                 print(": ", end="", flush=True)
                 
         except Exception as e:
@@ -36,7 +36,7 @@ class Client:
             choice = input(": ").strip()
             
             if not self.running: 
-                break  # Exit if the background thread found out the server died
+                break  
                 
             if choice == "1":
                 self.handle_send()
@@ -55,13 +55,24 @@ class Client:
         
     def handle_send(self):
         print("\nEnter your message to the server:")
-        msg = input(": ")
-        if msg.strip():
+        usermsg = self.inputUserMessage()
+        if usermsg != None:
             try:
-                self.socket.sendall(msg.encode())
+                print(usermsg.toMap())
+                json_data = json.dumps(usermsg.toMap()).encode("utf-8")
+                self.socket.sendall(json_data)
             except Exception as e:
                 print(f"[ERROR] Failed to send message: {e}")
                 self.running = False
+
+    def inputUserMessage(self) -> UserLoginMessage:
+        username = input("Username: ")
+
+        if len(username) != 0:
+            return UserLoginMessage(username.strip())
+        else:
+            return None
+            
 
     def handle_exit(self):
         print("Exiting client...")
@@ -80,12 +91,10 @@ class Driver:
                 
                 client = Client(s)
                 
-                # Start the server listener thread in the background
                 listener_thread = threading.Thread(target=client.listen_for_server)
                 listener_thread.daemon = True
                 listener_thread.start()
                 
-                # Keep the main thread running the menu loop
                 client.main_loop()
                 
         except ConnectionRefusedError:
