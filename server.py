@@ -2,6 +2,7 @@ import socket
 import json
 import threading
 import config as cg
+from message import UserLoginMessage, Serializable, SendAllMessage
 
 class ClientHandler:
     """Manages a single client connection's lifecycle on its own thread."""
@@ -27,10 +28,10 @@ class ClientHandler:
                     if not data:
                         print(f"\n[DISCONNECTED] Client {self.addr} disconnected.")
                         break
-                    received_data = json.loads(data.decode("utf-8"))
+                    received_data: dict = json.loads(data.decode("utf-8"))
                     print(f'\n[{self.addr}] Received: {received_data}')
+                    self.handleData(received_data)
                     
-
             except Exception as e:
                 print(f"\n[ERROR] Connection error with {self.addr}: {e}")
             finally:
@@ -45,6 +46,14 @@ class ClientHandler:
             except Exception as e:
                 break
 
+    def handleData(self, data: dict):
+        className = data[Serializable.ClassName]
+        if (className == SendAllMessage.__name__):
+            sendAll = SendAllMessage(data)
+            # Server driver needs to send this
+        else:
+            print("[ERROR] Could not process")
+        
 
 class ServerDriver:
     def __init__(self):

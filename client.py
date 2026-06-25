@@ -2,7 +2,7 @@ import socket
 import threading
 import sys
 import config as cg
-from message import UserLoginMessage
+from message import UserLoginMessage, Serializable, SendAllMessage
 import json
 
 class Client:
@@ -43,6 +43,8 @@ class Client:
             elif choice == "2":
                 self.handle_exit()
                 break
+            elif choice == "3":
+                self.handleSendAll()
             else:
                 print("Invalid choice. Try again.")
 
@@ -51,7 +53,27 @@ class Client:
         ### Client Menu ###
         (1) Send Message
         (2) Exit  
+        (3) Send to all clients
         """)
+
+    def handleSendAll(self):
+        print("Broadcast Message")
+        msg = self.inputSendAllMessage()
+        if msg != None:
+            try:
+                print(msg.toMap())
+                self.send(msg)
+            except Exception as e:
+                print(f"[ERROR] Failed to send {e}")
+                self.running = False        
+
+    def send(self, serializable: Serializable):
+        msg = serializable.toMap()  | {
+            Serializable.ClassName: type(serializable).__name__
+        }
+        json_data = json.dumps(msg).encode("utf-8")
+        self.socket.sendall(json_data)
+        print("Send, ", self.running)
         
     def handle_send(self):
         print("\nEnter your message to the server:")
@@ -59,11 +81,18 @@ class Client:
         if usermsg != None:
             try:
                 print(usermsg.toMap())
-                json_data = json.dumps(usermsg.toMap()).encode("utf-8")
-                self.socket.sendall(json_data)
+                self.send(usermsg)
             except Exception as e:
                 print(f"[ERROR] Failed to send message: {e}")
                 self.running = False
+
+    def inputSendAllMessage(self):
+        text = input("Message: ")
+
+        if len(text) != 0:
+            return SendAllMessage(text)
+        else:
+            return None
 
     def inputUserMessage(self) -> UserLoginMessage:
         username = input("Username: ")
