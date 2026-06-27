@@ -2,7 +2,7 @@ import socket
 import threading
 import sys
 import config as cg
-from message import UserLoginMessage, Serializable, SendAllMessage, SendTextMessage
+from message import UserLoginMessage, Serializable, SendAllMessage, SendTextMessage, ConnectionStatus, UserLoginMessageData, UserLoginStatus
 import json
 from abc import ABC, abstractmethod
 
@@ -14,6 +14,7 @@ class ClientSupport(ABC):
     def __init__(self, socket):
         self.__socket = socket
         self.__running = False
+        self.__status = ConnectionStatus.PENDING
 
     @abstractmethod
     def _isOption(self, choice: str) -> bool:
@@ -46,6 +47,11 @@ class ClientSupport(ABC):
 
     def __handleData(self, data: dict):
         print(f"[RECIVED] {data}")
+        if (data[Serializable.ClassName] == UserLoginStatus.__name__):
+            status = data[UserLoginStatus.StatusProperty]
+            print("status", self.__status)
+            self.__status = ConnectionStatus[status]
+            print("status", self.__status)
         
     def __listenToServer(self):
         try:
@@ -64,7 +70,7 @@ class ClientSupport(ABC):
                     self.__handleData(receivedData)
         except Exception as ex:
             print(f"[ERROR] {ex}")
-            self.__terminate()
+            self._terminate()
 
     def _sendToServer(self, serializable: Serializable):
         classMap = {
@@ -73,16 +79,29 @@ class ClientSupport(ABC):
         finalMap = serializable.toMap() | classMap
         jsonData = json.dumps(finalMap).encode(Common.ENCODE_TYPE)
         self.__socket.sendall(jsonData)
+        print("sent", jsonData)
 
     def __mainLoop(self) -> None:
         while self.__running:
-            self._printOptions()
-            choice = input(": ")
-            cleanedChoice, valid = self.__validate(choice)
-            if (valid):
-                self._handleChoice(cleanedChoice)
-            else:
-                print("[Error] Invalid input")
+            if self.__status == ConnectionStatus.PENDING:
+                self.__verificationFunc()
+            elif self.__status == ConnectionStatus.VERIFIED:
+                self.__verifiedFunc()
+
+    def __verificationFunc(self):
+        name = input("Name: ")
+        passowrd = input("Password: ")
+        msg = UserLoginMessage(UserLoginMessageData(name, passowrd))
+        self._sendToServer(msg)
+
+    def __verifiedFunc(self):
+        self._printOptions()
+        choice = input(": ")
+        cleanedChoice, valid = self.__validate(choice)
+        if (valid):
+            self._handleChoice(cleanedChoice)
+        else:
+            print("[Error] Invalid input")
 
     def __validate(self, choice: str):
         cleaned = choice.strip()
