@@ -10,8 +10,6 @@ class Common:
     RECV_SIZE = 1024
     ENCODE_TYPE = "utf-8"
 
-# Tests for this
-
 class ClientSupport(ABC):
     def __init__(self, socket):
         self.__socket = socket
@@ -104,17 +102,14 @@ class TestClient(ClientSupport):
         print("""
             ### Client Menu ###
             (1) Send Message
-            (2) Send to all clients
-            (3) Exit  
+            (2) Exit  
             """)
         
     def _handleChoice(self, choice: str) -> None:
         if (choice == "1"):
             self.__handleSendMessage()
         elif (choice == "2"):
-            pass
-        elif (choice == "3"):
-            pass
+            self._terminate()
         else:
             print("Failed")
 
@@ -137,7 +132,7 @@ class Driver:
                 client.run()
                 
         except ConnectionRefusedError:
-            print("[ERROR] Could not connect to server. Is it running?")
+            print("[ERROR] Could not connect to server")
         except KeyboardInterrupt:
             print("\nForce quitting...")
 
