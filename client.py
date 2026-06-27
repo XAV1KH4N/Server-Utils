@@ -1,14 +1,13 @@
 import socket
-import threading
-import sys
-import config as cg
-from message import UserLoginMessage, Serializable, SendAllMessage, SendTextMessage, ConnectionStatus, UserLoginMessageData, UserLoginStatus
 import json
+import threading
+import config as cg
+from messages.Serlializable import Serializable
+from messages.ConnectionStatus import ConnectionStatus
+from messages.SendTextMessage import SendTextMessage
+from messages.UserLoginMessage import UserLoginMessage, UserLoginStatus, UserLoginMessageData
+from messages.Common import Common
 from abc import ABC, abstractmethod
-
-class Common:
-    RECV_SIZE = 1024
-    ENCODE_TYPE = "utf-8"
 
 class ClientSupport(ABC):
     def __init__(self, socket):
@@ -60,7 +59,7 @@ class ClientSupport(ABC):
                 print("data", data)
                 if not data:
                     print("Disconnect")
-                    self.__serverDisconnect()
+                    self._serverDisconnect()
                     break
                 else:
                     decoded = data.decode(Common.ENCODE_TYPE)

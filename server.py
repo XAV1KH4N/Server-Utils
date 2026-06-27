@@ -2,8 +2,11 @@ import socket
 import json
 import threading
 import config as cg
-from message import UserLoginMessage, Serializable, SendAllMessage, SendTextMessage, ConnectionStatus, UserLoginStatus
-from client import Common
+from messages.Serlializable import Serializable
+from messages.ConnectionStatus import ConnectionStatus
+from messages.SendTextMessage import SendTextMessage
+from messages.UserLoginMessage import UserLoginMessage, UserLoginStatus
+from messages.Common import Common
 from abc import ABC, abstractmethod
 
 class ServerSupport(ABC):
