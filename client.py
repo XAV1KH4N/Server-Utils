@@ -2,82 +2,121 @@ import socket
 import threading
 import sys
 import config as cg
-from message import UserLoginMessage
+from message import UserLoginMessage, Serializable, SendAllMessage, SendTextMessage
 import json
+from abc import ABC, abstractmethod
 
-class Client:
-    def __init__(self, sock):
-        self.socket = sock
-        self.running = True
+class Common:
+    RECV_SIZE = 1024
+    ENCODE_TYPE = "utf-8"
 
-    def listen_for_server(self):
-        """Thread 1: Background listener that catches asynchronous server pings."""
-        try:
-            while self.running:
-                data = self.socket.recv(1024)
-                if not data:
-                    print("\n[DISCONNECTED] Server closed the connection.")
-                    self.running = False
-                    break
+class ClientSupport(ABC):
+    def __init__(self, socket):
+        self.__socket = socket
+        self.__running = False
+
+    @abstractmethod
+    def _isOption(self, choice: str) -> bool:
+        "Is input a valid selection"
+
+    @abstractmethod
+    def _printOptions(self) -> None:
+        "Print all options"
+
+    @abstractmethod
+    def _handleChoice(self, choice: str) -> None:
+        "handle the user input"
+
+    def run(self):
+        self.__running = True
                 
-                print(f"\n[SERVER UPDATE] {data.decode()}")
-                print(": ", end="", flush=True)
-                
-        except Exception as e:
-            if self.running:
-                print(f"\n[ERROR] Connection lost: {e}")
-        finally:
-            self.running = False
+        listener_thread = threading.Thread(target=self.__listenToServer)
+        listener_thread.daemon = True
+        listener_thread.start()
 
-    def main_loop(self):
-        """Thread 2 (Main Thread): Handles the user menu navigation."""
-        while self.running:
-            self.print_menu()
-            choice = input(": ").strip()
-            
-            if not self.running: 
-                break  
-                
-            if choice == "1":
-                self.handle_send()
-            elif choice == "2":
-                self.handle_exit()
-                break
-            else:
-                print("Invalid choice. Try again.")
+        self.__mainLoop()
 
-    def print_menu(self):
-        print("""
-        ### Client Menu ###
-        (1) Send Message
-        (2) Exit  
-        """)
+    def _serverDisconnect(self):
+        print("[DISCONNECTED] Serer closed the connection")
+        self.__running = False
+
+    def _terminate(self):
+        print("[DISCONNECTED] Connection closed by client")
+        self.__running = False
+
+    def __handleData(self, data: dict):
+        print(f"[RECIVED] {data}")
         
-    def handle_send(self):
-        print("\nEnter your message to the server:")
-        usermsg = self.inputUserMessage()
-        if usermsg != None:
-            try:
-                print(usermsg.toMap())
-                json_data = json.dumps(usermsg.toMap()).encode("utf-8")
-                self.socket.sendall(json_data)
-            except Exception as e:
-                print(f"[ERROR] Failed to send message: {e}")
-                self.running = False
+    def __listenToServer(self):
+        try:
+            while self.__running:
+                data = self.__socket.recv(Common.RECV_SIZE)
+                print("data", data)
+                if not data:
+                    print("Disconnect")
+                    self.__serverDisconnect()
+                    break
+                else:
+                    decoded = data.decode(Common.ENCODE_TYPE)
+                    print("Decoded", decoded)
+                    receivedData: dict = json.loads(decoded)
+                    print("Handleing", receivedData)
+                    self.__handleData(receivedData)
+        except Exception as ex:
+            print(f"[ERROR] {ex}")
+            self.__terminate()
 
-    def inputUserMessage(self) -> UserLoginMessage:
-        username = input("Username: ")
+    def _sendToServer(self, serializable: Serializable):
+        classMap = {
+            Serializable.ClassName: type(serializable).__name__
+        }
+        finalMap = serializable.toMap() | classMap
+        jsonData = json.dumps(finalMap).encode(Common.ENCODE_TYPE)
+        self.__socket.sendall(jsonData)
 
-        if len(username) != 0:
-            return UserLoginMessage(username.strip())
+    def __mainLoop(self) -> None:
+        while self.__running:
+            self._printOptions()
+            choice = input(": ")
+            cleanedChoice, valid = self.__validate(choice)
+            if (valid):
+                self._handleChoice(cleanedChoice)
+            else:
+                print("[Error] Invalid input")
+
+    def __validate(self, choice: str):
+        cleaned = choice.strip()
+        if len(cleaned) != 0 and self._isOption(cleaned):
+            return cleaned, True
         else:
-            return None
-            
+            return None, False 
 
-    def handle_exit(self):
-        print("Exiting client...")
-        self.running = False
+class TestClient(ClientSupport):
+    def __init__(self, socket):
+        super().__init__(socket)    
 
+    def _isOption(self, choice: str) -> bool:
+        return choice in ["1", "2", "3"]
+
+    def _printOptions(self) -> None:
+        print("""
+            ### Client Menu ###
+            (1) Send Message
+            (2) Exit  
+            """)
+        
+    def _handleChoice(self, choice: str) -> None:
+        if (choice == "1"):
+            self.__handleSendMessage()
+        elif (choice == "2"):
+            self._terminate()
+        else:
+            print("Failed")
+
+    def __handleSendMessage(self):
+        str = input("Message: ")
+        msg = SendTextMessage(str)
+        self._sendToServer(msg)
 
 class Driver:
     def __init__(self):
@@ -89,16 +128,11 @@ class Driver:
                 print(f"Connecting to {cg.Config.HOST}:{cg.Config.PORT}...")
                 s.connect((cg.Config.HOST, cg.Config.PORT))
                 
-                client = Client(s)
-                
-                listener_thread = threading.Thread(target=client.listen_for_server)
-                listener_thread.daemon = True
-                listener_thread.start()
-                
-                client.main_loop()
+                client = TestClient(s)
+                client.run()
                 
         except ConnectionRefusedError:
-            print("[ERROR] Could not connect to server. Is it running?")
+            print("[ERROR] Could not connect to server")
         except KeyboardInterrupt:
             print("\nForce quitting...")
 
