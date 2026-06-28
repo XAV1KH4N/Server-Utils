@@ -8,12 +8,18 @@ from messages.SendTextMessage import SendTextMessage
 from messages.UserLoginMessage import UserLoginMessage, UserLoginStatus, UserLoginMessageData
 from messages.Common import Common
 from abc import ABC, abstractmethod
+import time
 
 class ClientSupport(ABC):
+    LOGIN_DELAY = 5
+
     def __init__(self, socket):
         self.__socket = socket
         self.__running = False
         self.__status = ConnectionStatus.PENDING
+
+        self.__attempsLeft = 3
+        self.__lastLoginAttempt: float = -1
 
     @abstractmethod
     def _isOption(self, choice: str) -> bool:
@@ -82,10 +88,18 @@ class ClientSupport(ABC):
 
     def __mainLoop(self) -> None:
         while self.__running:
-            if self.__status == ConnectionStatus.PENDING:
-                self.__verificationFunc()
+            if self.__status in [ConnectionStatus.PENDING, ConnectionStatus.FAILED]:
+                if time.time() - self.__lastLoginAttempt >= ClientSupport.LOGIN_DELAY and self.__attempsLeft > 0:
+                    self.__verificationFunc()
+                    self.__lastLoginAttempt = time.time()
+                    self.__attempsLeft -= 1
+                elif self.__attempsLeft <= 0:
+                    print("Failed login")
+                    self._terminate()
             elif self.__status == ConnectionStatus.VERIFIED:
                 self.__verifiedFunc()
+            else:
+                pass
 
     def __verificationFunc(self):
         name = input("Name: ")

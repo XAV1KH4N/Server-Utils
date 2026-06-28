@@ -33,12 +33,6 @@ class ServerSupport(ABC):
         """Disconnection from client"""
 
     def run(self):
-        # verifiy before we start this
-        # 1. Pending
-        # 2. Recieve message
-        # 3. verified
-        # 4. Start loop
-
         listener = threading.Thread(target=self.__listen)
         listener.daemon = True
         listener.start()
@@ -68,7 +62,7 @@ class ServerSupport(ABC):
                         self._disconnected()
                     else:
                         recievedData: dict = json.loads(data.decode(Common.ENCODE_TYPE))
-                        if self._status == ConnectionStatus.PENDING:
+                        if self._status in [ConnectionStatus.PENDING, ConnectionStatus.FAILED]: # Just change to Unverified status
                             self.__handlePendingData(recievedData)
                         elif self._status == ConnectionStatus.VERIFIED:
                             print(f"Recieved: {recievedData}")
