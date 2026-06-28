@@ -1,7 +1,7 @@
 from enum import Enum
 
 class ConnectionStatus(Enum):
-    PENDING = 1
+    UNVERIFIED = 1
     VERIFIED = 2
-    FAILED = 3
+    BLOCKED = 3
         

@@ -16,7 +16,7 @@ class ClientSupport(ABC):
     def __init__(self, socket):
         self.__socket = socket
         self.__running = False
-        self.__status = ConnectionStatus.PENDING
+        self.__status = ConnectionStatus.UNVERIFIED
 
         self.__attempsLeft = 3
         self.__lastLoginAttempt: float = -1
@@ -54,9 +54,7 @@ class ClientSupport(ABC):
         print(f"[RECIVED] {data}")
         if (data[Serializable.ClassName] == UserLoginStatus.__name__):
             status = data[UserLoginStatus.StatusProperty]
-            print("status", self.__status)
             self.__status = ConnectionStatus[status]
-            print("status", self.__status)
         
     def __listenToServer(self):
         try:
@@ -88,7 +86,7 @@ class ClientSupport(ABC):
 
     def __mainLoop(self) -> None:
         while self.__running:
-            if self.__status in [ConnectionStatus.PENDING, ConnectionStatus.FAILED]:
+            if self.__status == ConnectionStatus.UNVERIFIED:
                 if time.time() - self.__lastLoginAttempt >= ClientSupport.LOGIN_DELAY and self.__attempsLeft > 0:
                     self.__verificationFunc()
                     self.__lastLoginAttempt = time.time()

@@ -11,7 +11,8 @@ from abc import ABC, abstractmethod
 
 class ServerSupport(ABC):
     def __init__(self):
-        self._status = ConnectionStatus.PENDING
+        self._status = ConnectionStatus.UNVERIFIED
+        self.__attemptsLeft = 3
         
     @abstractmethod
     def _getConn(self):
@@ -41,17 +42,21 @@ class ServerSupport(ABC):
         sender.daemon = True
         sender.start()
 
+    def __updateState(self, newState: ConnectionStatus):
+        self._status = newState
+        self._sendToClient(UserLoginStatus(newState))
+        
     def __handlePendingData(self, data: dict):
         if (data[Serializable.ClassName] == UserLoginMessage.__name__):
             name = data[UserLoginMessage.NameProperty]
             password = data[UserLoginMessage.PassProperty]
             if name == "xavi" and password == "1234":
-                self._status = ConnectionStatus.VERIFIED
                 print("Login Successful")
-                self._sendToClient(UserLoginStatus(ConnectionStatus.VERIFIED))
+                self.__updateState(ConnectionStatus.VERIFIED)
             else:
-                self._status = ConnectionStatus.FAILED
                 print("Login Failed")
+                self.__updateState(ConnectionStatus.UNVERIFIED)
+                self.__attemptsLeft -= 1
 
     def __listen(self):
         with self._getConn():
@@ -62,16 +67,24 @@ class ServerSupport(ABC):
                         self._disconnected()
                     else:
                         recievedData: dict = json.loads(data.decode(Common.ENCODE_TYPE))
-                        if self._status in [ConnectionStatus.PENDING, ConnectionStatus.FAILED]: # Just change to Unverified status
+                        if self._status == ConnectionStatus.UNVERIFIED:
                             self.__handlePendingData(recievedData)
                         elif self._status == ConnectionStatus.VERIFIED:
                             print(f"Recieved: {recievedData}")
-                            self._handleData(recievedData) ## Need to send message to client to express the conenction state
-
+                            self._handleData(recievedData)
+                    self.__postCheck()
+                            
             except KeyboardInterrupt as e:
                 print(f"\n[ERROR] Connection error with {self._getAddr()}: {e}")
             finally:
                 self._running = False
+            
+    def __postCheck(self):
+        if (self.__attemptsLeft <= 0):
+            self.__updateState(ConnectionStatus.BLOCKED)
+        
+        if (self._status == ConnectionStatus.BLOCKED):
+            self._running = False
 
     def __sendLoop(self):
         while self._running:
