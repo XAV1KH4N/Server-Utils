@@ -2,11 +2,18 @@ import socket
 import json
 import threading
 import config as cg
-from message import UserLoginMessage, Serializable, SendAllMessage, SendTextMessage
-from client import Common
+from messages.Serlializable import Serializable
+from messages.ConnectionStatus import ConnectionStatus
+from messages.SendTextMessage import SendTextMessage
+from messages.UserLoginMessage import UserLoginMessage, UserLoginStatus
+from messages.Common import Common
 from abc import ABC, abstractmethod
 
 class ServerSupport(ABC):
+    def __init__(self):
+        self._status = ConnectionStatus.UNVERIFIED
+        self.__attemptsLeft = 3
+        
     @abstractmethod
     def _getConn(self):
         """Client connection stream"""
@@ -35,6 +42,22 @@ class ServerSupport(ABC):
         sender.daemon = True
         sender.start()
 
+    def __updateState(self, newState: ConnectionStatus):
+        self._status = newState
+        self._sendToClient(UserLoginStatus(newState))
+        
+    def __handlePendingData(self, data: dict):
+        if (data[Serializable.ClassName] == UserLoginMessage.__name__):
+            name = data[UserLoginMessage.NameProperty]
+            password = data[UserLoginMessage.PassProperty]
+            if name == "xavi" and password == "1234":
+                print("Login Successful")
+                self.__updateState(ConnectionStatus.VERIFIED)
+            else:
+                print("Login Failed")
+                self.__updateState(ConnectionStatus.UNVERIFIED)
+                self.__attemptsLeft -= 1
+
     def __listen(self):
         with self._getConn():
             try:
@@ -44,12 +67,24 @@ class ServerSupport(ABC):
                         self._disconnected()
                     else:
                         recievedData: dict = json.loads(data.decode(Common.ENCODE_TYPE))
-                        print(f"Recieved: {recievedData}")
-                        self._handleData(recievedData)
+                        if self._status == ConnectionStatus.UNVERIFIED:
+                            self.__handlePendingData(recievedData)
+                        elif self._status == ConnectionStatus.VERIFIED:
+                            print(f"Recieved: {recievedData}")
+                            self._handleData(recievedData)
+                    self.__postCheck()
+                            
             except KeyboardInterrupt as e:
                 print(f"\n[ERROR] Connection error with {self._getAddr()}: {e}")
             finally:
                 self._running = False
+            
+    def __postCheck(self):
+        if (self.__attemptsLeft <= 0):
+            self.__updateState(ConnectionStatus.BLOCKED)
+        
+        if (self._status == ConnectionStatus.BLOCKED):
+            self._running = False
 
     def __sendLoop(self):
         while self._running:
@@ -61,22 +96,27 @@ class ServerSupport(ABC):
             except Exception as e:
                 break                
 
-    def _sendTextToClient(self, string: str):
-        msg = SendTextMessage(string)
-
+    def _sendToClient(self, msg: Serializable):
         classMap = {
             Serializable.ClassName: type(msg).__name__
         }
-
         finalMap = msg.toMap() | classMap
         jsonData = json.dumps(finalMap).encode(Common.ENCODE_TYPE)
         self._getConn().sendall(jsonData)
 
-class TestServerSupport(ServerSupport):
+    def _sendTextToClient(self, string: str):
+        msg = SendTextMessage(string)
+        self._sendToClient(msg)
+
+class TestServerSupport(ServerSupport): # Multiple server connection handlers, but only one "server", it will just have lots of conenctions. Gotta manage this
     def __init__(self, conn, addr):
         self._conn = conn
         self._addr = addr
         self._running = True
+        super().__init__()
+
+    ## Verify the client, then move connection to another support class once verified?
+    # Once connected, start verification 
 
     def _handleData(self, data: dict):
         className = data[Serializable.ClassName]
@@ -101,28 +141,38 @@ class TestServerSupport(ServerSupport):
         print(f"\n[DISCONNECTED] Client {self._getAddr()} disconnected")
         self._running = False
 
-class ServerDriver:
+class ConnectionManager:
     def __init__(self):
-        self.start_server()
+        self.connections = []
+    
+    def enqueue(self, conn, addr):
+        print(f"\n[NEW CONNECTION] {addr} connected.")
+        handler = TestServerSupport(conn, addr)
+        self.connections.append(handler)
+        handler.run()
 
-    def start_server(self):
+class Server:
+    def __init__(self):
+        self.manager = ConnectionManager()
+
+    def run(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             s.bind((cg.Config.HOST, cg.Config.PORT))
             s.listen()
+
             print(f'[SERVER STARTED] Always listening on {cg.Config.HOST}:{cg.Config.PORT}...')
 
-            try:
-                conn, addr = s.accept() 
-                print(f"\n[NEW CONNECTION] {addr} connected.")
-                    
-                handler = TestServerSupport(conn, addr)
-                handler.run()
-                    
-            except KeyboardInterrupt:
-                print("\n[SHUTTING DOWN] Server shutting down manually.")
-            except Exception as e:
-                print(f"[SERVER ERROR] {e}")
+            while True:
+                try:
+                    conn, addr = s.accept() 
+                    self.manager.enqueue(conn, addr)
+                except KeyboardInterrupt:
+                    print("\n[SHUTTING DOWN] Server shutting down manually.")
+                    break
+                except Exception as e:
+                    print(f"[SERVER ERROR] {e}")
+                    break
 
 if __name__ == "__main__":
-    ServerDriver()
+    Server().run()

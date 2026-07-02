@@ -1,19 +1,69 @@
 import socket
-import threading
-import sys
-import config as cg
-from message import UserLoginMessage, Serializable, SendAllMessage, SendTextMessage
 import json
+import threading
+import config as cg
+from messages.Serlializable import Serializable
+from messages.ConnectionStatus import ConnectionStatus
+from messages.SendTextMessage import SendTextMessage
+from messages.UserLoginMessage import UserLoginMessage, UserLoginStatus, UserLoginMessageData
+from messages.Common import Common
 from abc import ABC, abstractmethod
+import time
 
-class Common:
-    RECV_SIZE = 1024
-    ENCODE_TYPE = "utf-8"
+class LoginSupport():
+    MAX_ATTEMPTS = 3
+    LOGIN_DELAY = 5
+
+    def __init__(self):
+        self.__status: ConnectionStatus = ConnectionStatus.UNVERIFIED 
+        self.__attempsLeft: int = LoginSupport.MAX_ATTEMPTS
+        self.__lastLoginAttempt: float = -1
+
+    def failedLogin(self):
+        self.__attempsLeft -= 1
+        if (self.__attempsLeft < 0):
+            self.__status == ConnectionStatus.BLOCKED
+
+    def handleData(self, data: dict):
+        print(f"[RECIVED] ## {data}")
+        print(data, data[Serializable.ClassName], UserLoginStatus.__name__)
+        if (data[Serializable.ClassName] == UserLoginStatus.__name__):
+            status = data[UserLoginStatus.StatusProperty]
+            self.__status = ConnectionStatus[status]
+            self.failedLogin()
+            print("Updated", status, self.__status)
+
+    def buildLoginMessage(self) -> UserLoginMessage:
+        name = input("Name: ")
+        passowrd = input("Password: ")
+        msg = UserLoginMessage(UserLoginMessageData(name, passowrd))
+        self.__lastLoginAttempt = time.time()
+        return msg
+    
+    def isDelayComplete(self) -> bool:
+        return time.time() - self.__lastLoginAttempt >= LoginSupport.LOGIN_DELAY
+
+    def hasAttemptsLeft(self) -> bool:
+        return self.__attempsLeft > 0
+
+    def canAttempt(self):
+        return self.isDelayComplete() and self.hasAttemptsLeft()
+
+    def isUnverified(self) -> bool:
+        return self.__status == ConnectionStatus.UNVERIFIED
+    
+    def isVerified(self) -> bool:
+        return self.__status == ConnectionStatus.VERIFIED
+    
+    def isBlocked(self) -> bool:
+        return self.__status == ConnectionStatus.BLOCKED
 
 class ClientSupport(ABC):
+
     def __init__(self, socket):
         self.__socket = socket
         self.__running = False
+        self.__loginSupport = LoginSupport()
 
     @abstractmethod
     def _isOption(self, choice: str) -> bool:
@@ -46,6 +96,7 @@ class ClientSupport(ABC):
 
     def __handleData(self, data: dict):
         print(f"[RECIVED] {data}")
+        self.__loginSupport.handleData(dict)
         
     def __listenToServer(self):
         try:
@@ -54,17 +105,15 @@ class ClientSupport(ABC):
                 print("data", data)
                 if not data:
                     print("Disconnect")
-                    self.__serverDisconnect()
+                    self._serverDisconnect()
                     break
                 else:
                     decoded = data.decode(Common.ENCODE_TYPE)
-                    print("Decoded", decoded)
                     receivedData: dict = json.loads(decoded)
-                    print("Handleing", receivedData)
                     self.__handleData(receivedData)
         except Exception as ex:
             print(f"[ERROR] {ex}")
-            self.__terminate()
+            self._terminate()
 
     def _sendToServer(self, serializable: Serializable):
         classMap = {
@@ -76,13 +125,27 @@ class ClientSupport(ABC):
 
     def __mainLoop(self) -> None:
         while self.__running:
-            self._printOptions()
-            choice = input(": ")
-            cleanedChoice, valid = self.__validate(choice)
-            if (valid):
-                self._handleChoice(cleanedChoice)
-            else:
-                print("[Error] Invalid input")
+            if self.__loginSupport.isUnverified():
+                if self.__loginSupport.canAttempt():
+                    msg = self.__loginSupport.buildLoginMessage()
+                    self._sendToServer(msg)
+            elif self.__loginSupport.isVerified():
+                self.__verifiedFunc()
+
+            self.__postCheck()
+
+    def __postCheck(self):
+        if (self.__loginSupport.isBlocked()):
+            self._terminate()
+
+    def __verifiedFunc(self):
+        self._printOptions()
+        choice = input(": ")
+        cleanedChoice, valid = self.__validate(choice)
+        if (valid):
+            self._handleChoice(cleanedChoice)
+        else:
+            print("[Error] Invalid input")
 
     def __validate(self, choice: str):
         cleaned = choice.strip()
