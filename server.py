@@ -9,6 +9,14 @@ from messages.UserLoginMessage import UserLoginMessage, UserLoginStatus
 from messages.Common import Common
 from abc import ABC, abstractmethod
 
+class EncryptSupport:
+    X = 1031 # Diffe helman server number
+
+    def __init__(self, key = None):
+        pass
+        # Server needs a public and private key
+    
+
 class ServerSupport(ABC):
     def __init__(self):
         self._status = ConnectionStatus.UNVERIFIED

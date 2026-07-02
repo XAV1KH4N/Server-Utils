@@ -1,43 +1,168 @@
-from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives.asymmetric import padding
-import base64
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
-from cryptography.hazmat.primitives import serialization, hashes
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.serialization import load_pem_private_key, load_pem_public_key
+from cryptography.hazmat.backends import default_backend
+from RSAPrivate import *
+from RSAPublic import *
+from RSAKeyPairGen import RSAKeyPairGen
 
-# Generate a new elliptic curve key pair
+## Note, you can make a private key from a public key, client should only ge the public
+class RSAGen:
+    PUBLIC_EXPONENT = 65537
+    KEY_SIZE = 2048
 
-private_key = rsa.generate_private_key(
-    public_exponent=65537,
-    key_size=2048
-)
+    def __init__(self, key = None):
+        if (key != None):
+            self.__privateKey = key
+        else:
+            self.__privateKey = self.__createPrivateKey()
 
-#private_key = ec.generate_private_key(ec.SECP256K1(), default_backend())
-public_key = private_key.public_key()
+        self.__publicKey = self.__privateKey.public_key()
 
-# Print the public and private keys
-print(f'Private key: {private_key}')
-print(f'Public key: {public_key}')
-# Encrypt the message using the public key
-message = b'The secret message no one should read'
-ciphertext = public_key.encrypt(
-    message,
-    padding.OAEP(
-        mgf=padding.MGF1(algorithm=hashes.SHA256()),
-        algorithm=hashes.SHA256(),
-        label=None
-    )
-)
+    def getPrivateKey(self):
+        return self.__privateKey
 
-# Decrypting the message (=cyphertext) using your private key
-decrypted_message = private_key.decrypt(
-    ciphertext,
-    padding.OAEP(
-        mgf=padding.MGF1(algorithm=hashes.SHA256()),
-        algorithm=hashes.SHA256(),
-        label=None
-    )
-)
+    def getPublicKey(self):
+        return self.__publicKey
+    
+    def encryptMessage(self, msg: str):
+        return self.__publicKey.encrypt(
+            msg.encode(),
+            padding.OAEP(
+                mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                algorithm=hashes.SHA256(),
+                label=None
+            )
+        )
+    
+    def decryptMessage(self, cipher: str):
+        return self.__privateKey.decrypt(
+            cipher,
+            padding.OAEP(
+                mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                algorithm=hashes.SHA256(),
+                label=None
+            )
+        ).decode()
 
-# Printing the original and decrypted secret message
-print(f'Original message: {message}')
-print(f'Decrypted message: {decrypted_message}')
+    def __createPrivateKey(self):
+        return rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    
+# Servers Private Key
+# Servers Public Key
+# Large number
+
+# Large number -> Hash
+
+# Hash Y (Normal function)
+# Encrypt Hash
+
+### ---
+
+# Client gets Encrypted Hash Y
+# Decrtypt To get hash
+# Hash y, see if its Y
+# If so all good
+
+class RSAKeyPersister:
+    PATH = "keys/"
+    PRIVATE = "private"
+    PUBLIC = "public"
+    EXT = ".PEM"
+
+    def refreshKeys(self):
+        gen = RSAGen()
+        private = gen.getPrivateKey()
+        self.savePrivateKey(private)
+    
+    def savePrivateKey(self, pk):
+        pem = pk.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.TraditionalOpenSSL,
+            encryption_algorithm=serialization.NoEncryption()
+        )
+        with open(f"{RSAKeyPersister.PATH}{RSAKeyPersister.PRIVATE}{RSAKeyPersister.EXT}", 'wb') as pem_out:
+            pem_out.write(pem)
+
+    def loadPrivatekey(self):
+        with open(f"{RSAKeyPersister.PATH}{RSAKeyPersister.PRIVATE}{RSAKeyPersister.EXT}", 'rb') as pem_in:
+            pemlines = pem_in.read()
+            private_key = load_pem_private_key(pemlines, None, default_backend())
+            return private_key
+
+class RSAKeyPersister:
+    PATH = "keys/"
+    PRIVATE = "private"
+    PUBLIC = "public"
+    EXT = ".PEM"
+
+    def refreshKeys(self):
+        gen = RSAGen()
+        private = gen.getPrivateKey()
+        self.savePrivateKey(private)
+    
+    def savePrivateKey(self, pk):
+        pem = pk.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.TraditionalOpenSSL,
+            encryption_algorithm=serialization.NoEncryption()
+        )
+        with open(f"{RSAKeyPersister.PATH}{RSAKeyPersister.PRIVATE}{RSAKeyPersister.EXT}", 'wb') as pem_out:
+            pem_out.write(pem)
+
+    def loadPrivatekey(self):
+        with open(f"{RSAKeyPersister.PATH}{RSAKeyPersister.PRIVATE}{RSAKeyPersister.EXT}", 'rb') as pem_in:
+            pemlines = pem_in.read()
+            private_key = load_pem_private_key(pemlines, None, default_backend())
+            return private_key
+
+class Driver:
+    def testMsg(self):
+        gen = RSAGen()
+        msg = input(": ")
+        cipher = gen.encryptMessage(msg)
+        print(f'Cipher message: {cipher}')
+        dmsg = gen.decryptMessage(cipher)
+        print(f'Decrypted message: {dmsg}')
+
+    def testWrite(self):
+        writer = RSAKeyPersister()
+        writer.refreshKeys()
+
+    def testRead(self):
+        writer = RSAKeyPersister()
+        key = writer.loadPrivatekey()
+
+        gen = RSAGen(key)
+        msg = input(": ")
+        cipher = gen.encryptMessage(msg)
+        print(f'Cipher message: {cipher}')
+        dmsg = gen.decryptMessage(cipher)
+        print(f'Decrypted message: {dmsg}')
+
+
+    def testPublicRead(self):
+        privatePath = "keys/private.PEM"
+        publicPath = "keys/public.PEM"
+
+        privateReader = RSAPrivateKeyReader(privatePath)
+        privateHandler = privateReader.handler()
+
+        publicReader = RSAPublicKeyReader(publicPath)
+        publicHandler = publicReader.handler()
+
+        msg = input(": ")
+        cipher = privateHandler.encryptMessage(msg)
+        print(f'Cipher message: {cipher}')
+        
+        dmsg = publicHandler.decryptMessage(cipher)
+        print(f'Decrypted message: {dmsg}')
+
+    def testRefresh(self):
+        gen = RSAKeyPairGen()
+        gen.refreshKeys()
+
+
+if __name__ == "__main__":
+    driver = Driver()
+    driver.testRefresh()
