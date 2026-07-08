@@ -8,20 +8,17 @@ from messages.SendTextMessage import SendTextMessage
 from messages.UserLoginMessage import UserLoginMessage, UserLoginStatus
 from messages.Common import Common
 from abc import ABC, abstractmethod
-
-class EncryptSupport:
-    X = 1031 # Diffe helman server number
-
-    def __init__(self, key = None):
-        pass
-        # Server needs a public and private key
-    
+from RSA.RSAKeyPairGen import *
+from RSA.RSAPrivate import *
+from RSA.RSAPublic import *
+from Server.EncryptSupport import *
 
 class ServerSupport(ABC):
-    def __init__(self):
-        self._status = ConnectionStatus.UNVERIFIED
+    def __init__(self, encrypt: EncrpytConnectionSupport):
+        self._status = ConnectionStatus.UNVERIFIED 
         self.__attemptsLeft = 3
-        
+        self.__encrypt = encrypt
+    
     @abstractmethod
     def _getConn(self):
         """Client connection stream"""
@@ -95,6 +92,8 @@ class ServerSupport(ABC):
             self._running = False
 
     def __sendLoop(self):
+        self.__sendVerificationMessage()
+        
         while self._running:
             try:
                 msg = input(f"Send to {self._getAddr()} -> ")
@@ -103,6 +102,12 @@ class ServerSupport(ABC):
                     self._sendTextToClient(msg)
             except Exception as e:
                 break                
+
+    def __sendVerificationMessage(self):
+        msg = self.__encrypt.intialMessage()
+        print(msg)
+        print(msg.toMap())
+        self._sendToClient(msg)
 
     def _sendToClient(self, msg: Serializable):
         classMap = {
@@ -117,11 +122,12 @@ class ServerSupport(ABC):
         self._sendToClient(msg)
 
 class TestServerSupport(ServerSupport): # Multiple server connection handlers, but only one "server", it will just have lots of conenctions. Gotta manage this
-    def __init__(self, conn, addr):
+    def __init__(self, conn, addr, encrypt: EncryptSupport):
         self._conn = conn
         self._addr = addr
         self._running = True
-        super().__init__()
+        encrypt = EncrpytConnectionSupport(encrypt)
+        super().__init__(encrypt)
 
     ## Verify the client, then move connection to another support class once verified?
     # Once connected, start verification 
@@ -152,10 +158,11 @@ class TestServerSupport(ServerSupport): # Multiple server connection handlers, b
 class ConnectionManager:
     def __init__(self):
         self.connections = []
+        self.__encrypt = EncryptSupport()
     
     def enqueue(self, conn, addr):
         print(f"\n[NEW CONNECTION] {addr} connected.")
-        handler = TestServerSupport(conn, addr)
+        handler = TestServerSupport(conn, addr, self.__encrypt)
         self.connections.append(handler)
         handler.run()
 

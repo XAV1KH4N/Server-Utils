@@ -2,6 +2,7 @@ import socket
 import json
 import threading
 import config as cg
+from Server.DecryptSupport import DecryptSupport
 from messages.Serlializable import Serializable
 from messages.ConnectionStatus import ConnectionStatus
 from messages.SendTextMessage import SendTextMessage
@@ -59,11 +60,11 @@ class LoginSupport():
         return self.__status == ConnectionStatus.BLOCKED
 
 class ClientSupport(ABC):
-
     def __init__(self, socket):
         self.__socket = socket
         self.__running = False
         self.__loginSupport = LoginSupport()
+        self.__decrypt = DecryptSupport()
 
     @abstractmethod
     def _isOption(self, choice: str) -> bool:
@@ -95,14 +96,17 @@ class ClientSupport(ABC):
         self.__running = False
 
     def __handleData(self, data: dict):
-        print(f"[RECIVED] {data}")
-        self.__loginSupport.handleData(dict)
+        print(f"[RECIVED]")# {data}")
+        if (not self.__decrypt.isSecure()):
+            b = self.__decrypt.verify(data)
+            print("Verified Server ", b)
+        else:
+            self.__loginSupport.handleData(dict)
         
     def __listenToServer(self):
         try:
             while self.__running:
                 data = self.__socket.recv(Common.RECV_SIZE)
-                print("data", data)
                 if not data:
                     print("Disconnect")
                     self._serverDisconnect()
@@ -111,7 +115,7 @@ class ClientSupport(ABC):
                     decoded = data.decode(Common.ENCODE_TYPE)
                     receivedData: dict = json.loads(decoded)
                     self.__handleData(receivedData)
-        except Exception as ex:
+        except KeyboardInterrupt as ex:
             print(f"[ERROR] {ex}")
             self._terminate()
 

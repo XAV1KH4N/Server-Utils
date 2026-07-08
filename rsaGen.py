@@ -2,9 +2,11 @@ from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.serialization import load_pem_private_key, load_pem_public_key
 from cryptography.hazmat.backends import default_backend
-from RSAPrivate import *
-from RSAPublic import *
-from RSAKeyPairGen import RSAKeyPairGen
+from RSA.RSAPrivate import *
+from RSA.RSAPublic import *
+from RSA.RSAKeyPairGen import RSAKeyPairGen
+from Server.EncryptSupport import *
+from Server.DecryptSupport import *
 
 ## Note, you can make a private key from a public key, client should only ge the public
 class RSAGen:
@@ -48,20 +50,19 @@ class RSAGen:
     def __createPrivateKey(self):
         return rsa.generate_private_key(public_exponent=65537, key_size=2048)
     
-# Servers Private Key
-# Servers Public Key
-# Large number
+# Servers Private Key - Persisted
+# Servers Public Key - Persisted
+# Large number - Persisted
 
 # Large number -> Hash
 
 # Hash Y (Normal function)
-# Encrypt Hash
+# Sign Hash
 
 ### ---
 
-# Client gets Encrypted Hash Y
-# Decrtypt To get hash
-# Hash y, see if its Y
+# Client gets signed Hash Y and Y
+# Verify signed Y (Should decrypt, then it should match Sign(Y))
 # If so all good
 
 class RSAKeyPersister:
@@ -140,7 +141,6 @@ class Driver:
         dmsg = gen.decryptMessage(cipher)
         print(f'Decrypted message: {dmsg}')
 
-
     def testPublicRead(self):
         privatePath = "keys/private.PEM"
         publicPath = "keys/public.PEM"
@@ -162,7 +162,43 @@ class Driver:
         gen = RSAKeyPairGen()
         gen.refreshKeys()
 
+    def testHash(self):
+        enc = EncryptSupport()
+        signature = enc.signHash()
+
+        dec = DecryptSupport()
+        bs = EncryptSupport.Y_Bytes()
+        b = dec.verifySignature(bs, signature)
+
+        print("Verified", b)
+
+    def testFailedMessageHash(self):
+        enc = EncryptSupport()
+        signature = enc.signHash()
+
+        dec = DecryptSupport()
+        bs = EncryptSupport.To_Bytes(1032)
+        b = dec.verifySignature(bs, signature)
+
+        print("Failed Verification", b)
+
+
+    def testFailedSignatureHash(self):
+        enc = EncryptSupport()
+
+        bx = EncryptSupport.To_Bytes(1032)
+        wrongSignature = enc.signMsgHash(bx)
+
+        dec = DecryptSupport()
+        bs = EncryptSupport.Y_Bytes()
+
+        b = dec.verifySignature(bs, wrongSignature)
+
+        print("Failed Verification", b)
+
 
 if __name__ == "__main__":
     driver = Driver()
-    driver.testRefresh()
+    driver.testHash()
+    driver.testFailedMessageHash()
+    driver.testFailedSignatureHash()
