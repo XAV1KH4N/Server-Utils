@@ -7,8 +7,8 @@ from RSA.RSAPublic import *
 from RSA.RSAKeyPairGen import RSAKeyPairGen
 from Server.EncryptSupport import *
 from Server.DecryptSupport import *
+from RSA.DiffeHellam import SymetricEncryptionSupport
 
-## Note, you can make a private key from a public key, client should only ge the public
 class RSAGen:
     PUBLIC_EXPONENT = 65537
     KEY_SIZE = 2048
@@ -196,9 +196,16 @@ class Driver:
 
         print("Failed Verification", b)
 
+    def testSymmetric(self):
+        key = 3
+        enc = SymetricEncryptionSupport(key)
+        msg = "Test String"
+        cipher = enc.encrypt(msg.encode("utf-8"))
+        print("Msg before", msg)
+        print("Cipher", cipher)
+        dec = enc.decrypt(cipher)
+        print("Msg after", dec.decode("utf-8"))
 
 if __name__ == "__main__":
     driver = Driver()
-    driver.testHash()
-    driver.testFailedMessageHash()
-    driver.testFailedSignatureHash()
+    driver.testSymmetric()
