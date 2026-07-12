@@ -7,7 +7,9 @@ from messages.Serlializable import Serializable
 from messages.ConnectionStatus import ConnectionStatus
 from messages.SendTextMessage import SendTextMessage
 from messages.UserLoginMessage import UserLoginMessage, UserLoginStatus, UserLoginMessageData
+from messages.VerificationMessage import VerificationMessage, VerificationReponseMessage
 from messages.Common import Common
+from RSA.DiffeHellam import DiffeHellam
 from abc import ABC, abstractmethod
 import time
 
@@ -65,7 +67,8 @@ class ClientSupport(ABC):
         self.__running = False
         self.__loginSupport = LoginSupport()
         self.__decrypt = DecryptSupport()
-
+        self.__diffe = DiffeHellam(self.__decrypt.Y)
+        
     @abstractmethod
     def _isOption(self, choice: str) -> bool:
         "Is input a valid selection"
@@ -95,13 +98,27 @@ class ClientSupport(ABC):
         print("[DISCONNECTED] Connection closed by client")
         self.__running = False
 
+    def __handleUnverified(self, data: dict):
+        msg = VerificationMessage(data)
+        verified = self.__decrypt.verify(msg)
+        if (verified):
+            print("Server Verified")
+            self.__diffe.updateFromMessage(msg)
+            yMod = self.__diffe.yMod()
+            self.__decrypt.sentMessage()
+            response = VerificationReponseMessage(yMod)
+            self._sendToServer(response)
+            print("K", self.__diffe.k())
+        else:
+            print("Unable to verify server")
+
     def __handleData(self, data: dict):
         print(f"[RECIVED]")# {data}")
+
         if (not self.__decrypt.isSecure()):
-            b = self.__decrypt.verify(data)
-            print("Verified Server ", b)
+            self.__handleUnverified(data)
         else:
-            self.__loginSupport.handleData(dict)
+            self.__loginSupport.handleData(data)
         
     def __listenToServer(self):
         try:

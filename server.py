@@ -6,6 +6,7 @@ from messages.Serlializable import Serializable
 from messages.ConnectionStatus import ConnectionStatus
 from messages.SendTextMessage import SendTextMessage
 from messages.UserLoginMessage import UserLoginMessage, UserLoginStatus
+from messages.VerificationMessage import VerificationReponseMessage
 from messages.Common import Common
 from abc import ABC, abstractmethod
 from RSA.RSAKeyPairGen import *
@@ -52,7 +53,16 @@ class ServerSupport(ABC):
         self._sendToClient(UserLoginStatus(newState))
         
     def __handlePendingData(self, data: dict):
-        if (data[Serializable.ClassName] == UserLoginMessage.__name__):
+        if (not self.__encrypt.isSecure()):
+            if (data[Serializable.ClassName] == VerificationReponseMessage.__name__):
+                msg = VerificationReponseMessage(data)
+                self.__encrypt.markPost(msg.y)
+                print("K", self.__encrypt.k())
+            else:
+                print("Msg not expected")
+
+
+        elif (data[Serializable.ClassName] == UserLoginMessage.__name__):
             name = data[UserLoginMessage.NameProperty]
             password = data[UserLoginMessage.PassProperty]
             if name == "xavi" and password == "1234":
@@ -72,7 +82,9 @@ class ServerSupport(ABC):
                         self._disconnected()
                     else:
                         recievedData: dict = json.loads(data.decode(Common.ENCODE_TYPE))
+                        print(self._status)
                         if self._status == ConnectionStatus.UNVERIFIED:
+                            print("pending data")
                             self.__handlePendingData(recievedData)
                         elif self._status == ConnectionStatus.VERIFIED:
                             print(f"Recieved: {recievedData}")
