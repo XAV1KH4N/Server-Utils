@@ -2,11 +2,14 @@ import socket
 import json
 import threading
 import config as cg
+from Server.DecryptSupport import DecryptSupport
 from messages.Serlializable import Serializable
 from messages.ConnectionStatus import ConnectionStatus
 from messages.SendTextMessage import SendTextMessage
 from messages.UserLoginMessage import UserLoginMessage, UserLoginStatus, UserLoginMessageData
+from messages.VerificationMessage import VerificationMessage, VerificationReponseMessage
 from messages.Common import Common
+from RSA.DiffeHellam import DiffeHellam
 from abc import ABC, abstractmethod
 import time
 
@@ -59,12 +62,13 @@ class LoginSupport():
         return self.__status == ConnectionStatus.BLOCKED
 
 class ClientSupport(ABC):
-
     def __init__(self, socket):
         self.__socket = socket
         self.__running = False
         self.__loginSupport = LoginSupport()
-
+        self.__decrypt = DecryptSupport()
+        self.__diffe = DiffeHellam(self.__decrypt.Y)
+        
     @abstractmethod
     def _isOption(self, choice: str) -> bool:
         "Is input a valid selection"
@@ -94,15 +98,30 @@ class ClientSupport(ABC):
         print("[DISCONNECTED] Connection closed by client")
         self.__running = False
 
+    def __handleUnverified(self, data: dict):
+        msg = VerificationMessage(data)
+        verified = self.__decrypt.verify(msg)
+        if (verified):
+            self.__diffe.updateFromMessage(msg)
+            yMod = self.__diffe.yMod()
+            self.__decrypt.sentMessage()
+            response = VerificationReponseMessage(yMod)
+            self._sendToServer(response)
+        else:
+            print("Unable to verify server")
+
     def __handleData(self, data: dict):
-        print(f"[RECIVED] {data}")
-        self.__loginSupport.handleData(dict)
+        print(f"[RECIVED]")# {data}")
+
+        if (not self.__decrypt.isSecure()):
+            self.__handleUnverified(data)
+        else:
+            self.__loginSupport.handleData(data)
         
     def __listenToServer(self):
         try:
             while self.__running:
                 data = self.__socket.recv(Common.RECV_SIZE)
-                print("data", data)
                 if not data:
                     print("Disconnect")
                     self._serverDisconnect()
@@ -111,7 +130,7 @@ class ClientSupport(ABC):
                     decoded = data.decode(Common.ENCODE_TYPE)
                     receivedData: dict = json.loads(decoded)
                     self.__handleData(receivedData)
-        except Exception as ex:
+        except KeyboardInterrupt as ex:
             print(f"[ERROR] {ex}")
             self._terminate()
 

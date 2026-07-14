@@ -6,14 +6,20 @@ from messages.Serlializable import Serializable
 from messages.ConnectionStatus import ConnectionStatus
 from messages.SendTextMessage import SendTextMessage
 from messages.UserLoginMessage import UserLoginMessage, UserLoginStatus
+from messages.VerificationMessage import VerificationReponseMessage
 from messages.Common import Common
 from abc import ABC, abstractmethod
+from RSA.RSAKeyPairGen import *
+from RSA.RSAPrivate import *
+from RSA.RSAPublic import *
+from Server.EncryptSupport import *
 
 class ServerSupport(ABC):
-    def __init__(self):
-        self._status = ConnectionStatus.UNVERIFIED
+    def __init__(self, encrypt: EncrpytConnectionSupport):
+        self._status = ConnectionStatus.UNVERIFIED 
         self.__attemptsLeft = 3
-        
+        self.__encrypt = encrypt
+    
     @abstractmethod
     def _getConn(self):
         """Client connection stream"""
@@ -47,7 +53,16 @@ class ServerSupport(ABC):
         self._sendToClient(UserLoginStatus(newState))
         
     def __handlePendingData(self, data: dict):
-        if (data[Serializable.ClassName] == UserLoginMessage.__name__):
+        if (not self.__encrypt.isSecure()):
+            if (data[Serializable.ClassName] == VerificationReponseMessage.__name__):
+                msg = VerificationReponseMessage(data)
+                self.__encrypt.markPost(msg.y)
+                print("K", self.__encrypt.k())
+            else:
+                print("Msg not expected")
+
+
+        elif (data[Serializable.ClassName] == UserLoginMessage.__name__):
             name = data[UserLoginMessage.NameProperty]
             password = data[UserLoginMessage.PassProperty]
             if name == "xavi" and password == "1234":
@@ -67,7 +82,9 @@ class ServerSupport(ABC):
                         self._disconnected()
                     else:
                         recievedData: dict = json.loads(data.decode(Common.ENCODE_TYPE))
+                        print(self._status)
                         if self._status == ConnectionStatus.UNVERIFIED:
+                            print("pending data")
                             self.__handlePendingData(recievedData)
                         elif self._status == ConnectionStatus.VERIFIED:
                             print(f"Recieved: {recievedData}")
@@ -87,6 +104,8 @@ class ServerSupport(ABC):
             self._running = False
 
     def __sendLoop(self):
+        self.__sendVerificationMessage()
+        
         while self._running:
             try:
                 msg = input(f"Send to {self._getAddr()} -> ")
@@ -95,6 +114,12 @@ class ServerSupport(ABC):
                     self._sendTextToClient(msg)
             except Exception as e:
                 break                
+
+    def __sendVerificationMessage(self):
+        msg = self.__encrypt.intialMessage()
+        print(msg)
+        print(msg.toMap())
+        self._sendToClient(msg)
 
     def _sendToClient(self, msg: Serializable):
         classMap = {
@@ -109,11 +134,12 @@ class ServerSupport(ABC):
         self._sendToClient(msg)
 
 class TestServerSupport(ServerSupport): # Multiple server connection handlers, but only one "server", it will just have lots of conenctions. Gotta manage this
-    def __init__(self, conn, addr):
+    def __init__(self, conn, addr, encrypt: EncryptSupport):
         self._conn = conn
         self._addr = addr
         self._running = True
-        super().__init__()
+        encrypt = EncrpytConnectionSupport(encrypt)
+        super().__init__(encrypt)
 
     ## Verify the client, then move connection to another support class once verified?
     # Once connected, start verification 
@@ -144,10 +170,11 @@ class TestServerSupport(ServerSupport): # Multiple server connection handlers, b
 class ConnectionManager:
     def __init__(self):
         self.connections = []
+        self.__encrypt = EncryptSupport()
     
     def enqueue(self, conn, addr):
         print(f"\n[NEW CONNECTION] {addr} connected.")
-        handler = TestServerSupport(conn, addr)
+        handler = TestServerSupport(conn, addr, self.__encrypt)
         self.connections.append(handler)
         handler.run()
 

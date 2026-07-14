@@ -1,0 +1,21 @@
+Encryption
+- AES
+- Random number generation
+
+Login
+- Hashing + salt
+
+DB 
+- 
+
+Refactor
+- Lets server subclasses behaiour be configured
+- Have more layering. Have messages be reconstucted ect
+- More subclassing
+- Messages pre-diffe will not be encrpyted, maybe a wrapper case class for messages to show what state they are in
+
+Test Cases
+- 
+
+Extra
+- Shouldmt the myenv be in the repo?
