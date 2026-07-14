@@ -21,6 +21,8 @@ class DecryptSupport:
     
     def verify(self, msg: VerificationMessage) -> bool:
         verified = self.verifySignature(msg.y, msg.hash)
+        if (verified):
+            self.__status = VerificationStatus.POST
         return verified
 
     def verifySignature(self, y: int, cipherHash) -> bool:

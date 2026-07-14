@@ -3,6 +3,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 import os
 import base64
+from cryptography.hazmat.primitives import padding
 
 class DiffeHellam:
     def __init__(self, yThis):
@@ -30,16 +31,17 @@ class DiffeHellam:
 
 class SymetricEncryptionSupport:    
     def __init__(self, key: int):
-        #self.key = base64.b64decode(f"{key}")
-        #self.key = base64.b64decode("7Y/Ycbyw407VkBBKh7veNkpk9uBHg+h4YT+PTkcIcY8=")
         self.backend = default_backend()
-        self.key = os.urandom(32)
+        self.key = key.to_bytes(32, byteorder='big')
         self.iv = os.urandom(16)
 
     def encrypt(self, data: bytes) -> bytes:
-        cipher = Cipher(algorithms.AES(self.key), modes.CBC(self.iv))
+        padder = padding.ANSIX923(128).padder() 
+        padData = padder.update(data) + padder.finalize()
+
+        cipher = Cipher(algorithms.AES(self.key), modes.CBC(self.iv), backend=self.backend)
         encryptor = cipher.encryptor()
-        ct = encryptor.update(b"a secret message") + encryptor.finalize()
+        ct = encryptor.update(padData) + encryptor.finalize()
         return ct
 
     def decrypt(self, text: bytes) -> bytes:

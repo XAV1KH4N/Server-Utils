@@ -102,13 +102,11 @@ class ClientSupport(ABC):
         msg = VerificationMessage(data)
         verified = self.__decrypt.verify(msg)
         if (verified):
-            print("Server Verified")
             self.__diffe.updateFromMessage(msg)
             yMod = self.__diffe.yMod()
             self.__decrypt.sentMessage()
             response = VerificationReponseMessage(yMod)
             self._sendToServer(response)
-            print("K", self.__diffe.k())
         else:
             print("Unable to verify server")
 
