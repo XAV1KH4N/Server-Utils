@@ -1,4 +1,4 @@
-from messages.Serlializable import Serializable
+from messages.common.Serlializable import Serializable
 from messages.ConnectionStatus import ConnectionStatus
 
 class UserLoginMessageData():
@@ -21,7 +21,7 @@ class UserLoginMessage(Serializable):
             self.name = ""
             self.password = ""
 
-    def toMap(self) -> dict:
+    def to_map(self) -> dict:
         return {
             UserLoginMessage.NameProperty: self.name,
             UserLoginMessage.PassProperty: self.password
@@ -39,7 +39,7 @@ class UserLoginStatus(Serializable):
         else:
             self.status = ""
 
-    def toMap(self) -> dict:
+    def to_map(self) -> dict:
         return {
             UserLoginStatus.StatusProperty: self.status.name
         }

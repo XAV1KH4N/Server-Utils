@@ -3,7 +3,7 @@ import json
 import threading
 import config as cg
 from Server.DecryptSupport import DecryptSupport
-from messages.Serlializable import Serializable
+from messages.common.Serlializable import Serializable
 from messages.ConnectionStatus import ConnectionStatus
 from messages.SendTextMessage import SendTextMessage
 from messages.UserLoginMessage import UserLoginMessage, UserLoginStatus, UserLoginMessageData
@@ -138,7 +138,7 @@ class ClientSupport(ABC):
         classMap = {
             Serializable.ClassName: type(serializable).__name__
         }
-        finalMap = serializable.toMap() | classMap
+        finalMap = serializable.to_map() | classMap
         jsonData = json.dumps(finalMap).encode(Common.ENCODE_TYPE)
         self.__socket.sendall(jsonData)
 

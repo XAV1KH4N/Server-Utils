@@ -2,7 +2,7 @@ import socket
 import json
 import threading
 import config as cg
-from messages.Serlializable import Serializable
+from messages.common.Serlializable import Serializable
 from messages.ConnectionStatus import ConnectionStatus
 from messages.SendTextMessage import SendTextMessage
 from messages.UserLoginMessage import UserLoginMessage, UserLoginStatus
@@ -118,14 +118,14 @@ class ServerSupport(ABC):
     def __sendVerificationMessage(self):
         msg = self.__encrypt.intialMessage()
         print(msg)
-        print(msg.toMap())
+        print(msg.to_map())
         self._sendToClient(msg)
 
     def _sendToClient(self, msg: Serializable):
         classMap = {
             Serializable.ClassName: type(msg).__name__
         }
-        finalMap = msg.toMap() | classMap
+        finalMap = msg.to_map() | classMap
         jsonData = json.dumps(finalMap).encode(Common.ENCODE_TYPE)
         self._getConn().sendall(jsonData)
 

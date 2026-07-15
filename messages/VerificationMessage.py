@@ -1,5 +1,5 @@
 import base64
-from messages.Serlializable import Serializable
+from messages.common.Serlializable import Serializable
 from enum import Enum
 
 class VerificationMessageData:
@@ -35,7 +35,7 @@ class VerificationMessage(Serializable):
             self.b = -1
             self.prime -1
 
-    def toMap(self) -> dict:
+    def to_map(self) -> dict:
         hash = base64.b64encode(self.hash).decode('utf-8')
         return {
             VerificationMessage.YProperty: self.y,

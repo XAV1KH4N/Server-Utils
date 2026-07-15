@@ -1,4 +1,4 @@
-from messages.Serlializable import Serializable
+from messages.common.Serlializable import Serializable
 
 class SendAllMessage(Serializable):
     TextProperty = "text"
@@ -11,7 +11,7 @@ class SendAllMessage(Serializable):
         else:
             self.text = ""
 
-    def toMap(self):
+    def to_map(self):
         return {
             SendAllMessage.TextProperty: self.text
         }
@@ -27,7 +27,7 @@ class SendTextMessage(Serializable):
         else:
             self.__text = ""
 
-    def toMap(self):
+    def to_map(self):
         return {
             SendTextMessage.TextProperty: self.__text
         }
