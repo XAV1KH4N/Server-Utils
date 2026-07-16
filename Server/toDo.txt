@@ -9,13 +9,12 @@ DB
 - 
 
 Refactor
+- Message Wrappers
+- Support classes encrypting messages/ decrypting
 - Layering (Messages wrapper with class name)
 - Lets server subclasses behaiour be configured
 - More subclassing
 - Messages pre-diffe will not be encrpyted, maybe a wrapper case class for messages to show what state they are in
-
-Test Cases
-- 
 
 Extra
 - Shouldmt the myenv be in the repo?

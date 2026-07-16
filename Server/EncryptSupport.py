@@ -6,6 +6,7 @@ from cryptography.hazmat.primitives import hashes
 from messages.VerificationMessage import VerificationMessage, VerificationMessageData, VerificationStatus
 from RSA.DiffeHellam import DiffeHellam
 
+
 class EncryptSupport:
     Y: int = 1031 # This is not the secret number // per connection
     P: int = 13
