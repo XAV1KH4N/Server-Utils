@@ -46,61 +46,55 @@
 # Handler recieves, then forwards a response back if needed
 # Some util worker that will wait for a response 
 
-from abc import ABC, abstractmethod 
-from __future__ import annotations
+from Server.connections.ConnectionHandler import ConnectionHandler
+from common.ConnectionUtils import ConnectionUtils
+from common.logging.Logger import log
+from common.events.Events import Event, EventHandler, EventDesitination
+import socket 
+from Server.handler.MessageHandler import MessageHandler
 
-class Event(ABC):
-    pass
-
-class EventHandler(ABC): # Tests for allt his too
-
-    @abstractmethod
-    def onChange(event: Event) -> None:
-        pass
-
-    def listenTo(self, publisher: EventPublisher):
-        publisher.register(self)
-
-
-class EventPublisher(ABC):
+class Server(EventHandler):
     def __init__(self):
-        self.observers: list[EventHandler] = []
-
-    def publish(self, event: Event):
-        for observer in self.observers:
-            observer.onChange(event)
-        
-    def register(self, handler: EventHandler):
-        self.observers += handler
-
-    def unregister(self, handler: EventHandler):
-        self.observers = [observer for observer in self.observers if observer != handler]
-
-
-class MessageHandler:
-    pass
-
-class ConnectionHandler: # Does not need to be extended
-    def __init__(self):
-        self.__verifiedConnections = [] # These lists to only be handled by a single thread
-        self.__unverifiedConnections = [] 
+        self.__message_handler = MessageHandler()
+        self.__connection_handler = ConnectionHandler()
 
     def start(self):
-        pass
-     # Start listening
+        self.__addListeners()
+        self.__listen_loop()
 
-    def new_connection(self):
-        pass
+    def on_change(self, event: Event):
+        match event.getDestination():
+            case EventDesitination.MESSAGE_HANDLER:
+                self.__message_handler.handle_event(event)
+            case _ : 
+                log("Even has unknown location")
 
-    # listen to Single Sub connection handler
-    # Might raise event to
+    def __addListeners(self):
+        self.__connection_handler.register(self)
+        self.__message_handler.register(self)
 
-class Server:
-    def __init__(self, messageHandler: MessageHandler):
-        self.__messageHandler = messageHandler
-        self.__connectionHandler = ConnectionHandler()
+    def __listen_loop(self):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            s.bind((ConnectionUtils.HOST, ConnectionUtils.PORT))
+            s.listen()
 
-    def start(self):
-        # Check DB, and apply changes
-        # Add listeners to verythin
-        self.__connectionHandler.start()
+            log(f'[SERVER STARTED] Listening on {ConnectionUtils.HOST}:{ConnectionUtils.PORT}...')
+
+            while True:
+                try:
+                    conn, addr = s.accept() 
+                    self.__connection_handler.new_connection(conn, addr)
+                except KeyboardInterrupt:
+                    log("[SHUTTING DOWN] Server shutting down manually.")
+                    break
+                except Exception as e:
+                    log(f"[SERVER ERROR] {e}")
+                    break
+
+class ServerDriver:
+    def start():
+        Server().start()
+
+if __name__ == "__main":
+    ServerDriver.start()

@@ -2,7 +2,7 @@ import socket
 import json
 import threading
 import config as cg
-from messages.common.Serlializable import Serializable
+from messages.common.Serializable import Serializable
 from messages.ConnectionStatus import ConnectionStatus
 from messages.SendTextMessage import SendTextMessage
 from messages.UserLoginMessage import UserLoginMessage, UserLoginStatus

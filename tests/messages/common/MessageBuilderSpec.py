@@ -1,8 +1,8 @@
 from unittest import TestCase, main
 from ecrypt.EncryptMessageBuilder import EncryptMessageBuilder
-from messages.common.Messages import EncryptedMessage, EncryptedMessageData
+from messages.common.Messages import EncryptedMessage
 from messages.common.MessageBuilder import MessageBuilder
-from messages.common.Serlializable import Serializable, SerializerBuilder
+from messages.common.Serializable import Serializable, SerializerBuilder
 
 class TestMessageBuilder(TestCase):
 

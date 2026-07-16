@@ -1,5 +1,5 @@
 import os
-from messages.common.Serlializable import Serializable, SerializerBuilder
+from messages.common.Serializable import Serializable, SerializerBuilder
 from messages.common.Messages import EncryptedMessage, EncryptedMessageData
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend

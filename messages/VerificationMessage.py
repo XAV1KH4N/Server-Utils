@@ -1,5 +1,5 @@
 import base64
-from messages.common.Serlializable import Serializable
+from messages.common.Serializable import Serializable
 from enum import Enum
 
 class VerificationMessageData:

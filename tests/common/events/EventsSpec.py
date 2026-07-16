@@ -1,5 +1,5 @@
 from unittest import TestCase, main
-from common.events.Events import Event, EventHandler, EventPublisher
+from common.events.Events import Event,  EventOrigin, EventDesitination, EventHandler, EventPublisher
 
 class TestEvents(TestCase):
 
@@ -95,11 +95,15 @@ class TestEvents(TestCase):
             self.assertEqual(last_event_2.getData(), "qwer")   
 
         
-
-
 class TestEvent(Event):
     def __init__(self, data: str):
         self.__data = data
+
+    def getDestination(self) -> Event:
+        return EventDesitination.ALL
+
+    def getOrigin(self) -> EventOrigin:
+        return EventOrigin.MESSAGE_HANDLER
 
     def getData(self) -> str:
         return self.__data
@@ -111,7 +115,7 @@ class TestHandler(EventHandler):
     def __init__(self):
         self.__last_event = None
 
-    def onChange(self, event: Event) -> None:
+    def on_change(self, event: Event) -> None:
         self.__last_event = event
 
     def getLastEvent(self):

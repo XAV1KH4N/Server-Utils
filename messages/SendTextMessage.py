@@ -1,4 +1,4 @@
-from messages.common.Serlializable import Serializable
+from messages.common.Serializable import Serializable
 
 class SendAllMessage(Serializable):
     TextProperty = "text"

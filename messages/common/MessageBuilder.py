@@ -1,4 +1,4 @@
-from messages.common.Serlializable import Serializable
+from messages.common.Serializable import Serializable
 from messages.common.Messages import Message, EncryptedMessage, EncryptedMessageData
 from common.EncyptUtils import EncryptUtils
 import json

@@ -1,4 +1,4 @@
-from messages.common.Serlializable import Serializable
+from messages.common.Serializable import Serializable
 from common.EncyptUtils import EncryptUtils
 import base64
 
