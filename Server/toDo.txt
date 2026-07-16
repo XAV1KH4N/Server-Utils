@@ -11,7 +11,10 @@ DB
 Refactor
 - Message Wrappers
 - Support classes encrypting messages/ decrypting
-- Layering (Messages wrapper with class name)
+- Message Handling
+- HandleMessage -> HandleEncryptedMsg -> HandleNormalMessage
+- Server
+-
 - Lets server subclasses behaiour be configured
 - More subclassing
 - Messages pre-diffe will not be encrpyted, maybe a wrapper case class for messages to show what state they are in
