@@ -52,28 +52,34 @@ from common.logging.Logger import log
 from common.events.Events import Event, EventHandler, EventDesitination
 import socket 
 from Server.handler.MessageHandler import MessageHandler
+from messages.keyExchange.KeyExchanges import KeyExchangeHandler
 
 class Server(EventHandler):
     def __init__(self):
         self.__message_handler = MessageHandler()
         self.__connection_handler = ConnectionHandler()
+        self.__key_exchange_manager = KeyExchangeHandler()
 
     def start(self):
         self.__addListeners()
         self.__listen_loop()
 
     def on_change(self, event: Event):
-        match event.getDestination():
+        match event.get_destination():
             case EventDesitination.MESSAGE_HANDLER:
                 self.__message_handler.handle_event(event)
+            case EventDesitination.MESSAGE_HANDLER:
+                self.__connection_handler.handle_event(event)
             case _ : 
                 log("Even has unknown location")
 
     def __addListeners(self):
         self.__connection_handler.register(self)
         self.__message_handler.register(self)
+        self.__key_exchange_manager.register(self)
 
     def __listen_loop(self):
+        print("Entering Main Loop")
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             s.bind((ConnectionUtils.HOST, ConnectionUtils.PORT))
@@ -94,7 +100,8 @@ class Server(EventHandler):
 
 class ServerDriver:
     def start():
+        print("Starting")
         Server().start()
 
-if __name__ == "__main":
+if __name__ == "__main__":
     ServerDriver.start()

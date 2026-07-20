@@ -24,6 +24,5 @@ class MessageBuilder:
             case _:
                 raise Exception("Message class not found")  
 
-
 # Take message (Probably encrypted, throw error if not)
 # Turn to json and back

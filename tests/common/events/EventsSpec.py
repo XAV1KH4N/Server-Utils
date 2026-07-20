@@ -99,10 +99,10 @@ class TestEvent(Event):
     def __init__(self, data: str):
         self.__data = data
 
-    def getDestination(self) -> Event:
+    def get_destination(self) -> Event:
         return EventDesitination.ALL
 
-    def getOrigin(self) -> EventOrigin:
+    def get_origin(self) -> EventOrigin:
         return EventOrigin.MESSAGE_HANDLER
 
     def getData(self) -> str:

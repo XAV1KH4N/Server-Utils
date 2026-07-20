@@ -55,7 +55,7 @@ class VerificationReponseMessage:
         else:
             self.y = ""
 
-    def toMap(self) -> dict:
+    def to_map(self) -> dict:
         return {
             VerificationReponseMessage.YProperty: self.y,
         }

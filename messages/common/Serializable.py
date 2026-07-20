@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 class Serializable(ABC):
-    #ClassName = "className"
+    ClassName = "className"
 
     @abstractmethod
     def to_map(self) -> dict:

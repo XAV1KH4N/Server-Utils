@@ -44,9 +44,9 @@ class ServerSupport(ABC):
         listener.daemon = True
         listener.start()
 
-        sender = threading.Thread(target=self.__sendLoop)
-        sender.daemon = True
-        sender.start()
+        #sender = threading.Thread(target=self.__sendLoop)
+        #sender.daemon = True
+        #sender.start()
 
     def __updateState(self, newState: ConnectionStatus):
         self._status = newState
@@ -75,14 +75,18 @@ class ServerSupport(ABC):
 
     def __listen(self):
         with self._getConn():
+            print("With Connection")
             try:
+                self.__sendVerificationMessage()
+
                 while self._isRunning():
                     data = self._conn.recv(1024)
+                    print("** Data", data)
                     if not data:
                         self._disconnected()
                     else:
                         recievedData: dict = json.loads(data.decode(Common.ENCODE_TYPE))
-                        print(self._status)
+                        print("Status", self._status)
                         if self._status == ConnectionStatus.UNVERIFIED:
                             print("pending data")
                             self.__handlePendingData(recievedData)

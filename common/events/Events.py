@@ -5,11 +5,11 @@ from enum import Enum
 class Event(ABC):
     
     @abstractmethod
-    def getDestination(self) -> EventDesitination:
+    def get_destination(self) -> EventDesitination:
         pass 
 
     @abstractmethod
-    def getOrigin(self) -> EventOrigin:
+    def get_origin(self) -> EventOrigin:
         pass 
 
 class EventDesitination(Enum):
@@ -24,6 +24,7 @@ class EventOrigin(Enum):
     COMMUNICATION_HANDLER = 2
     SERVER = 3
     CLIENT = 4
+    KEY_EXCHANGE_HANDLER = 5
 
 class EventPublisher(ABC):
     def __init__(self):

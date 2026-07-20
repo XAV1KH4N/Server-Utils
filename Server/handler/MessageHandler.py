@@ -8,9 +8,13 @@ from messages.common.MessageBuilder import MessageBuilder
 class MessageHandler(EventPublisher):
     def __init__(self):
         self.__builder = MessageBuilder()
+        super().__init__()
+
+    def create_key_exchange_message(self) -> None:
+        pass
 
     def handle_event(self, event: Event) -> None:
-        match event.getOrigin:
+        match event.get_origin:
             case EventOrigin.COMMUNICATION_HANDLER:
                 self.handle_communication_event(event)
             case _ : 
