@@ -28,7 +28,7 @@ class ConnectionHandler(EventHandler, EventPublisher): # Does not need to be ext
         if isinstance(event, KeyExchangeStartEvent):
             key_data = event.get_data()
             msg = KeyExchangeInitMessage(key_data)
-            self.__connections[0].send_to_server(msg)
+            self.__connections[0].send_to_client(msg)
 
     def on_change(self, event: Event):
         match event.get_destination():

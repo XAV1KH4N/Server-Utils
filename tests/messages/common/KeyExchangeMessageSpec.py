@@ -15,10 +15,10 @@ class TestKeyExchangeMessages(TestCase):
        map = msg.to_map()
        new_mg = KeyExchangeInitMessage(map)
 
-       self.assertEqual(new_mg.getBase(), b)
-       self.assertEqual(new_mg.getY(), y)
-       self.assertEqual(new_mg.getSignature(), sign)
-       self.assertEqual(new_mg.getPrime(), p)
+       self.assertEqual(new_mg.get_base(), b)
+       self.assertEqual(new_mg.get_Y(), y)
+       self.assertEqual(new_mg.get_signature(), sign)
+       self.assertEqual(new_mg.get_prime(), p)
 
 
 if __name__ == '__main__':

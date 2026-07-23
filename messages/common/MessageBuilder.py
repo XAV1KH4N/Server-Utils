@@ -1,4 +1,4 @@
-from messages.common.KeyExchangeMessage import KeyExchangeInitMessage
+from messages.common.KeyExchangeMessage import KeyExchangeInitMessage, KeyExchangeResponseMessage
 from messages.common.Serializable import Serializable
 from messages.common.Messages import Message
 from common.EncyptUtils import EncryptUtils
@@ -17,6 +17,8 @@ class MessageBuilder:
         match message.get_class_name():
             case KeyExchangeInitMessage.__name__:
                 return KeyExchangeInitMessage(message.get_msg_map())
+            case KeyExchangeResponseMessage.__name__:
+                return KeyExchangeResponseMessage(message.get_msg_map())
             case _:
                 print("Unexpected message wrapped") 
 

@@ -12,7 +12,7 @@ class ClientConnectionHandler(EventPublisher):
         self.__message_builder = MessageBuilder()
         super().__init__()
 
-    def send_to_server(self, msg: Serializable):
+    def send_to_client(self, msg: Serializable):
         data = self.__message_builder.build_message_bytes(msg)
         self.__conn.sendall(data)
         print("Sent", msg.__class__.__name__)

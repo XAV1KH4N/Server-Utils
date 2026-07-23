@@ -8,18 +8,35 @@ class KeyExchangeData:
         self.__base: int = base
         self.__prime: int = prime
 
-    def getY(self) -> int:
+    def get_Y(self) -> int:
         return self.__Y
 
-    def getSignature(self) -> bytes:
+    def get_signature(self) -> bytes:
         return self.__signature
     
-    def getBase(self) -> int:
+    def get_base(self) -> int:
         return self.__base
 
-    def getPrime(self) -> int:
+    def get_prime(self) -> int:
         return self.__prime
         
+class KeyExchangeResponseMessage(Serializable):
+    YProperty = "Y"
+
+    def __init__(self, data: int | dict):
+        if (isinstance(data, int)):
+            self.__Y: int = data
+        else:
+            self.__Y: int = data[KeyExchangeInitMessage.YProperty]
+
+    def to_map(self) -> dict:
+        return {
+          KeyExchangeInitMessage.YProperty: self.__Y,
+        } 
+    
+    def get_Y(self) -> int:
+        return self.__Y
+
 class KeyExchangeInitMessage(Serializable):
     YProperty = "Y"
     SignatureProperty = "signature"
@@ -28,10 +45,10 @@ class KeyExchangeInitMessage(Serializable):
 
     def __init__(self, data: KeyExchangeData | dict):
         if (isinstance(data, KeyExchangeData)):
-            self.__Y: bytes = data.getY()
-            self.__signature: bytes = data.getSignature()
-            self.__base: int = data.getBase()
-            self.__prime: int = data.getPrime()
+            self.__Y: int = data.get_Y()
+            self.__signature: bytes = data.get_signature()
+            self.__base: int = data.get_base()
+            self.__prime: int = data.get_prime()
         else:
             data_str = data[KeyExchangeInitMessage.SignatureProperty]
             data_bytes = self.__encode(data_str)
@@ -49,16 +66,16 @@ class KeyExchangeInitMessage(Serializable):
           KeyExchangeInitMessage.SignatureProperty: self.__decode(self.__signature)
         } 
     
-    def getY(self) -> int:
+    def get_Y(self) -> int:
         return self.__Y
 
-    def getSignature(self) -> bytes:
+    def get_signature(self) -> bytes:
         return self.__signature
     
-    def getBase(self) -> int:
+    def get_base(self) -> int:
         return self.__base
 
-    def getPrime(self) -> int:
+    def get_prime(self) -> int:
         return self.__prime
 
     def __encode(self, string: str) -> bytes:
