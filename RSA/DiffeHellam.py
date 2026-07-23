@@ -2,7 +2,6 @@ from messages.VerificationMessage import VerificationMessage
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 import os
-import base64
 from cryptography.hazmat.primitives import padding
 
 class DiffeHellam:
@@ -27,7 +26,6 @@ class DiffeHellam:
 
     def yMod(self):
         return (self.b ** self.yThis) % self.p
-    
 
 class SymetricEncryptionSupport:    
     def __init__(self, key: int):

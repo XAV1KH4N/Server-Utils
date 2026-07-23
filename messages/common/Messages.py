@@ -20,10 +20,10 @@ class Message(Serializable):
             Message.ClassNameProperty: self.__className
         }
     
-    def getMsgMap(self):
+    def get_msg_map(self):
         return self.__msg
     
-    def getClassName(self):
+    def get_class_name(self):
         return self.__className
     
 class EncryptedMessageData:

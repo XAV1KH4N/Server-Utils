@@ -1,5 +1,6 @@
+from messages.common.KeyExchangeMessage import KeyExchangeInitMessage
 from messages.common.Serializable import Serializable
-from messages.common.Messages import Message, EncryptedMessage, EncryptedMessageData
+from messages.common.Messages import Message
 from common.EncyptUtils import EncryptUtils
 import json
 
@@ -11,18 +12,16 @@ class MessageBuilder:
         final_msg = Message(msg)
         json_data = json.dumps(final_msg.to_map()).encode(EncryptUtils.ENCODE_TYPE)
         return json_data
+    
+    def extract_message(self, message: Message) -> Serializable:        
+        match message.get_class_name():
+            case KeyExchangeInitMessage.__name__:
+                return KeyExchangeInitMessage(message.get_msg_map())
+            case _:
+                print("Unexpected message wrapped") 
 
-    def rebuild_message(self, data: bytes) -> Serializable:
+    def rebuild_message(self, data: bytes) -> Message:
         decoded = data.decode(EncryptUtils.ENCODE_TYPE)
         received_data: dict = json.loads(decoded)
         msg = Message(received_data)
-        map = msg.getMsgMap()
-        class_name = msg.getClassName()
-        match class_name:
-            case "EncryptedMessage": 
-                return EncryptedMessage(map) 
-            case _:
-                raise Exception("Message class not found")  
-
-# Take message (Probably encrypted, throw error if not)
-# Turn to json and back
+        return msg

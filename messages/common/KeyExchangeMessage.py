@@ -28,13 +28,14 @@ class KeyExchangeInitMessage(Serializable):
 
     def __init__(self, data: KeyExchangeData | dict):
         if (isinstance(data, KeyExchangeData)):
-            self.__Y: int = data.getY()
+            self.__Y: bytes = data.getY()
             self.__signature: bytes = data.getSignature()
             self.__base: int = data.getBase()
             self.__prime: int = data.getPrime()
         else:
             data_str = data[KeyExchangeInitMessage.SignatureProperty]
             data_bytes = self.__encode(data_str)
+
             self.__Y: int = data[KeyExchangeInitMessage.YProperty]
             self.__signature: bytes = data_bytes
             self.__base: int = data[KeyExchangeInitMessage.BaseProperty]
@@ -64,5 +65,5 @@ class KeyExchangeInitMessage(Serializable):
         return base64.b64decode(string)
     
     def __decode(self, data: bytes) -> str: 
-        return base64.b64encode(self.__signature).decode('utf-8')
+        return base64.b64encode(data).decode('utf-8')
     

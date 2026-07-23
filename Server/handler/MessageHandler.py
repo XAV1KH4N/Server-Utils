@@ -4,16 +4,15 @@ from Server.connections.ClientConnectionHandler import ClientMessageEvent
 from common.logging.Logger import log
 from common.events.Events import Event, EventOrigin, EventHandler, EventDesitination, EventPublisher
 from messages.common.MessageBuilder import MessageBuilder
+from messages.common.Messages import Message
 
 class MessageHandler(EventPublisher):
     def __init__(self):
         self.__builder = MessageBuilder()
         super().__init__()
 
-    def create_key_exchange_message(self) -> None:
-        pass
-
     def handle_event(self, event: Event) -> None:
+        print("")
         match event.get_origin:
             case EventOrigin.COMMUNICATION_HANDLER:
                 self.handle_communication_event(event)
@@ -29,6 +28,4 @@ class MessageHandler(EventPublisher):
 
     def handle_raw_data(self, raw_data) -> None:
         msg = self.__builder.rebuild_message(raw_data)
-        match msg:
-            case _: 
-                log("Unhandled client message")
+        pass

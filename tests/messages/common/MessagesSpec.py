@@ -27,7 +27,7 @@ class TestMessageClasses(TestCase):
         msg = Message(enc_msg)
 
         msg_map = msg.to_map()
-        recreated_msg = Message(msg_map).getMsgMap()
+        recreated_msg = Message(msg_map).get_msg_map()
         recreated_enc_msg = EncryptedMessage(recreated_msg)
 
         self.assertEqual(recreated_enc_msg.getClassName(), "AnotherTestClassName")
