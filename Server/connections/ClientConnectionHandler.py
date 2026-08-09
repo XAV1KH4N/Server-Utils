@@ -1,5 +1,4 @@
 import threading
-from common.logging.Logger import log
 from common.events.Events import Event, EventOrigin, EventPublisher, EventDesitination
 from messages.common.MessageBuilder import MessageBuilder
 from messages.common.Serializable import Serializable
@@ -30,12 +29,12 @@ class ClientConnectionHandler(EventPublisher):
                     data = self.__conn.recv(1024)
                     print("data ", data)
                     if not data:
-                        log("Connection terminated by peer")
+                        print("Connection terminated by peer")
                         self.__is_running = False
                     else:
                         self.publish(ClientMessageEvent(data))
             except KeyboardInterrupt:
-                log(f"\n[ERROR] Connection error with {self._getAddr()}:")
+                print(f"\n[ERROR] Connection error with {self._getAddr()}:")
             finally:
                 self._running = False
 

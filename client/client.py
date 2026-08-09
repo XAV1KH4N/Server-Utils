@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
 from client.connections.ServerConnectionHandler import ServerConnectionHandler
+from client.events.ServerMessageEvent import ServerMessageEvent
 from common.events import KeyExchangeRecievedEvent
 from common.events.Events import Event, EventOrigin, EventPublisher
 from common.logging.Logger import log
 from messages.common.KeyExchangeMessage import KeyExchangeInitMessage
-from client.connections.ServerConnectionHandler import ServerMessageEvent
 from messages.common.Serializable import Serializable
 from messages.common.MessageBuilder import MessageBuilder
 

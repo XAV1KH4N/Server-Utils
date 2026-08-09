@@ -30,7 +30,7 @@ class TestMessageClasses(TestCase):
         recreated_msg = Message(msg_map).get_msg_map()
         recreated_enc_msg = EncryptedMessage(recreated_msg)
 
-        self.assertEqual(recreated_enc_msg.getClassName(), "AnotherTestClassName")
+        self.assertEqual(recreated_enc_msg.get_class_name(), "AnotherTestClassName")
 
     def test_encrypted_msg_build(self):
         bs = b'abc'
@@ -39,8 +39,8 @@ class TestMessageClasses(TestCase):
         enc_map = EncryptedMessage(EncryptedMessageData(bs, class_name)).to_map()
         enc = EncryptedMessage(enc_map)
 
-        self.assertEqual(enc.getCipherBytes(), bs)
-        self.assertEqual(enc.getClassName(), class_name)
+        self.assertEqual(enc.get_cipher_bytes(), bs)
+        self.assertEqual(enc.get_class_name(), class_name)
         
 if __name__ == '__main__':
     main()

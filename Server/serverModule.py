@@ -1,10 +1,16 @@
+import socket 
+
 from Server.connections.ConnectionHandler import ConnectionHandler
+from Server.events.EncryptedMessageEvent import EncryptedMessageEvent
 from Server.handler.KeyExchangeHandler import KeyExchangeHandler
 from common.ConnectionUtils import ConnectionUtils
 from common.logging.Logger import log
 from common.events.Events import Event, EventHandler, EventDesitination
-import socket 
+from messages.common.Messages import EncryptedMessage
+from messages.common.Serializable import Serializable
 from Server.handler.MessageHandler import MessageHandler
+from ecrypt.EncryptMessageBuilder import EncryptMessageBuilder
+from messages.common.MessageBuilder import MessageBuilder
 
 class Server(EventHandler):
     def __init__(self):
@@ -22,9 +28,35 @@ class Server(EventHandler):
                 self.__message_handler.handle_event(event)
             case EventDesitination.COMMUNICATION_HANDLER:
                 self.__connection_handler.handle_event(event)
+            case EventDesitination.KEY_EXCHANGE_HANDLER:
+                self.__key_exchange_manager.handle_event(event)
+            case EventDesitination.SERVER:
+                self.__handle_event(event)
             case _ : 
-                log("Even has unknown location")
+                log("Event has unknown location", event.get_destination())
 
+    def __handle_event(self, event: Event):
+        print("Handling event", event.__class__.__name__)
+        match event:
+            case EncryptedMessageEvent():
+                msg = event.get_msg()
+                dec_msg = self.__decrypt__message(msg)
+                self.__message_handler.handle_msg(dec_msg)
+            case _:
+                print("Unhandled event for server")
+
+    def __encryptor_for(self) -> EncryptMessageBuilder:
+        k = self.__key_exchange_manager.K()
+        builder = MessageBuilder()
+        enc_builder = EncryptMessageBuilder(k, builder)
+        return enc_builder
+    
+    def __decrypt__message(self, msg: EncryptedMessage) -> Serializable:
+        enc_builder = self.__encryptor_for()
+        print("Msg cipher", msg.get_cipher())
+        dec_msg = enc_builder.recreate_message(msg)
+        return dec_msg
+    
     def __add_listeners(self):
         self.__connection_handler.register(self)
         self.__message_handler.register(self)

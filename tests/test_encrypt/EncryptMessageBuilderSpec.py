@@ -13,7 +13,7 @@ class TestEncryptedMessageBuilderMethods(TestCase):
 
         builder = EncryptMessageBuilder(17, TestSerializerBuilder())
         wrapper = builder.build_message(msg)
-        self.assertEqual(wrapper.getClassName(), "EncryptedMessage")
+        self.assertEqual(wrapper.get_class_name(), "EncryptedMessage")
 
     def test_message_rebuilder(self):
         data = TestMessage("1234")

@@ -27,9 +27,10 @@ class Message(Serializable):
         return self.__className
     
 class EncryptedMessageData:
-    def __init__(self, cipher: bytes, className: str):
+    def __init__(self, cipher: bytes, className: str, iv: bytes):
         self.__cipher = base64.b64encode(cipher).decode(EncryptUtils.ENCODE_TYPE)
         self.__className = className
+        self.__iv = base64.b64encode(iv).decode(EncryptUtils.ENCODE_TYPE)
 
     def getCipher(self) -> str:
         return self.__cipher
@@ -37,29 +38,39 @@ class EncryptedMessageData:
     def getClassName(self) -> str:
         return self.__className
 
+    def get_iv(self) -> str:
+        return self.__iv
+
 class EncryptedMessage(Serializable):
     CipherProperty = "cipher"
     ClassNameProperty = "className"
+    IVProperty = "iv"
 
     def __init__(self, data: EncryptedMessageData | dict):
         if (isinstance(data, EncryptedMessageData)):
             self.__cipher = data.getCipher()
             self.__className = data.getClassName()
+            self.__iv = data.get_iv()
         else:
             self.__cipher = data[EncryptedMessage.CipherProperty]
             self.__className = data[EncryptedMessage.ClassNameProperty]
+            self.__iv = data[EncryptedMessage.IVProperty]
 
     def to_map(self):
         return {
             EncryptedMessage.CipherProperty: self.__cipher,
-            EncryptedMessage.ClassNameProperty: self.__className
+            EncryptedMessage.ClassNameProperty: self.__className,
+            EncryptedMessage.IVProperty: self.__iv
         }
 
-    def getCipher(self) -> str:
+    def get_cipher(self) -> str:
         return self.__cipher
     
-    def getCipherBytes(self) -> bytes:
+    def get_cipher_bytes(self) -> bytes:
         return base64.b64decode(self.__cipher)
 
-    def getClassName(self) -> str:
+    def get_iv(self) -> bytes:
+        return base64.b64decode(self.__iv)
+
+    def get_class_name(self) -> str:
         return self.__className

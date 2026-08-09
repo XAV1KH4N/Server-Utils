@@ -4,7 +4,7 @@ from common.logging.Logger import log
 from common.events.Events import Event, EventOrigin, EventPublisher, EventHandler, EventDesitination
 from messages.common.KeyExchangeMessage import KeyExchangeInitMessage
 
-class ConnectionHandler(EventHandler, EventPublisher): # Does not need to be extended
+class ConnectionHandler(EventHandler, EventPublisher):
     def __init__(self):
         self.__connections: list[ClientConnectionHandler] = [] 
         super().__init__()
