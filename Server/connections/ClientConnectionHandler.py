@@ -1,0 +1,52 @@
+import threading
+from common.events.Events import Event, EventOrigin, EventPublisher, EventDesitination
+from messages.common.MessageBuilder import MessageBuilder
+from messages.common.Serializable import Serializable
+
+class ClientConnectionHandler(EventPublisher):
+    def __init__(self, conn, addr):
+        self.__conn = conn
+        self.__addr = addr
+        self.__is_running = True
+        self.__message_builder = MessageBuilder()
+        super().__init__()
+
+    def send_to_client(self, msg: Serializable):
+        data = self.__message_builder.build_message_bytes(msg)
+        self.__conn.sendall(data)
+        print("Sent", msg.__class__.__name__)
+
+    def run_in_background(self):
+        listener = threading.Thread(target=self.__listen_loop)
+        listener.daemon = True
+        listener.start()
+
+    def __listen_loop(self):
+        print("Listening")
+        with self.__conn:
+            try:
+                while self.__is_running:
+                    data = self.__conn.recv(1024)
+                    print("data ", data)
+                    if not data:
+                        print("Connection terminated by peer")
+                        self.__is_running = False
+                    else:
+                        self.publish(ClientMessageEvent(data))
+            except KeyboardInterrupt:
+                print(f"\n[ERROR] Connection error with {self._getAddr()}:")
+            finally:
+                self._running = False
+
+class ClientMessageEvent(Event):
+    def __init__(self, data):
+        self.__data  = data
+
+    def get_data(self):
+        return self.__data
+    
+    def get_destination(self):
+        return EventDesitination.MESSAGE_HANDLER
+    
+    def get_origin(self):
+        return EventOrigin.COMMUNICATION_HANDLER

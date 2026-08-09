@@ -6,6 +6,7 @@ from cryptography.hazmat.primitives import hashes
 from messages.VerificationMessage import VerificationMessage, VerificationMessageData, VerificationStatus
 from RSA.DiffeHellam import DiffeHellam
 
+
 class EncryptSupport:
     Y: int = 1031 # This is not the secret number // per connection
     P: int = 13
@@ -30,10 +31,10 @@ class EncryptSupport:
         return EncryptSupport.B
 
     def signHash(self):
-        return self.__privateHandler.signMessage(EncryptSupport.Y_Bytes())
+        return self.__privateHandler.sign_message(EncryptSupport.Y_Bytes())
     
     def signMsgHash(self, msg: bytes):
-        return self.__privateHandler.signMessage(msg)
+        return self.__privateHandler.sign_message(msg)
          
     def __loadPrivateHandler(self):
         if (not self.__fileExists(RSAKeyPairGen.PRIVATE_PATH)):

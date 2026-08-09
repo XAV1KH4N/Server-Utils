@@ -2,7 +2,7 @@ import socket
 import json
 import threading
 import config as cg
-from messages.Serlializable import Serializable
+from messages.common.Serializable import Serializable
 from messages.ConnectionStatus import ConnectionStatus
 from messages.SendTextMessage import SendTextMessage
 from messages.UserLoginMessage import UserLoginMessage, UserLoginStatus
@@ -44,9 +44,9 @@ class ServerSupport(ABC):
         listener.daemon = True
         listener.start()
 
-        sender = threading.Thread(target=self.__sendLoop)
-        sender.daemon = True
-        sender.start()
+        #sender = threading.Thread(target=self.__sendLoop)
+        #sender.daemon = True
+        #sender.start()
 
     def __updateState(self, newState: ConnectionStatus):
         self._status = newState
@@ -75,14 +75,18 @@ class ServerSupport(ABC):
 
     def __listen(self):
         with self._getConn():
+            print("With Connection")
             try:
+                self.__sendVerificationMessage()
+
                 while self._isRunning():
                     data = self._conn.recv(1024)
+                    print("** Data", data)
                     if not data:
                         self._disconnected()
                     else:
                         recievedData: dict = json.loads(data.decode(Common.ENCODE_TYPE))
-                        print(self._status)
+                        print("Status", self._status)
                         if self._status == ConnectionStatus.UNVERIFIED:
                             print("pending data")
                             self.__handlePendingData(recievedData)
@@ -118,14 +122,14 @@ class ServerSupport(ABC):
     def __sendVerificationMessage(self):
         msg = self.__encrypt.intialMessage()
         print(msg)
-        print(msg.toMap())
+        print(msg.to_map())
         self._sendToClient(msg)
 
     def _sendToClient(self, msg: Serializable):
         classMap = {
             Serializable.ClassName: type(msg).__name__
         }
-        finalMap = msg.toMap() | classMap
+        finalMap = msg.to_map() | classMap
         jsonData = json.dumps(finalMap).encode(Common.ENCODE_TYPE)
         self._getConn().sendall(jsonData)
 

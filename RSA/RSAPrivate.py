@@ -18,7 +18,7 @@ class RSAPrivateHandler:
             )
         ).decode()
     
-    def signMessage(self, msg: bytes):
+    def sign_message(self, msg: bytes):
         return self.__private_key.sign(
             msg,
             padding.PSS(

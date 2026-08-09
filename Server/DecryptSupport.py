@@ -27,7 +27,7 @@ class DecryptSupport:
 
     def verifySignature(self, y: int, cipherHash) -> bool:
         b = EncryptionSupport.toBytes(y)
-        return self.__publicHandler.verifyMessage(b, cipherHash)
+        return self.__publicHandler.verify_message(b, cipherHash)
     
     def sentMessage(self):
         self.__status = VerificationStatus.SENT
