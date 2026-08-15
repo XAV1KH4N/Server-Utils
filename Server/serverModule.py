@@ -1,5 +1,6 @@
 import socket 
 
+from common.events.ConnectionId import ConnectionID
 from Server.connections.ConnectionHandler import ConnectionHandler
 from Server.events.EncryptedMessageEvent import EncryptedMessageEvent
 from Server.handler.KeyExchangeHandler import KeyExchangeHandler
@@ -40,19 +41,20 @@ class Server(EventHandler):
         match event:
             case EncryptedMessageEvent():
                 msg = event.get_msg()
-                dec_msg = self.__decrypt__message(msg)
-                self.__message_handler.handle_msg(dec_msg)
+                id = event.get_id()
+                dec_msg = self.__decrypt__message(msg, id)
+                self.__message_handler.handle_msg(dec_msg, id)
             case _:
                 print("Unhandled event for server")
 
-    def __encryptor_for(self) -> EncryptMessageBuilder:
-        k = self.__key_exchange_manager.K()
+    def __encryptor_for(self, id: ConnectionID) -> EncryptMessageBuilder:
+        k = self.__key_exchange_manager.K(id)
         builder = MessageBuilder()
         enc_builder = EncryptMessageBuilder(k, builder)
         return enc_builder
     
-    def __decrypt__message(self, msg: EncryptedMessage) -> Serializable:
-        enc_builder = self.__encryptor_for()
+    def __decrypt__message(self, msg: EncryptedMessage, id: ConnectionID) -> Serializable:
+        enc_builder = self.__encryptor_for(id)
         print("Msg cipher", msg.get_cipher())
         dec_msg = enc_builder.recreate_message(msg)
         return dec_msg
@@ -74,8 +76,8 @@ class Server(EventHandler):
             while True:
                 try:
                     conn, addr = s.accept() 
-                    self.__connection_handler.new_connection(conn, addr)
-                    self.__key_exchange_manager.initiate_new_connection()
+                    id = self.__connection_handler.new_connection(conn, addr)
+                    self.__key_exchange_manager.initiate_new_connection(id)
                 except KeyboardInterrupt:
                     log("[SHUTTING DOWN] Server shutting down manually.")
                     break
