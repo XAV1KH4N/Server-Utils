@@ -28,6 +28,7 @@ class EventDesitination(Enum):
     SERVER = 3
     CLIENT = 4
     KEY_EXCHANGE_HANDLER = 5
+    CLIENT_SERVER_HANDLER = 6
 
 class EventOrigin(Enum):
     MESSAGE_HANDLER = 1

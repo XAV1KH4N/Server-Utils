@@ -29,7 +29,7 @@ class MessageHandler(EventPublisher):
             case ClientMessageEvent():
                 self.handle_raw_data(event.get_data(), event.get_id())
             case _ :
-                log("Unhandled client message")
+                log("Unhandled client message event")
 
     def handle_raw_data(self, raw_data, id: ConnectionID) -> None:
         print("Raw data", raw_data)
@@ -47,7 +47,7 @@ class MessageHandler(EventPublisher):
             case TextMessage():
                 print("Encrypted Text Message", msg.get_msg())
             case _ :
-                log("Unhandled client message") 
+                log("Unhandled client message", msg.__class__.__name__) 
 
 class KeyExchangeResponseEvent(EventWithId):
 

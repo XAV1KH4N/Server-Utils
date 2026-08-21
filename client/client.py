@@ -7,6 +7,7 @@ from common.logging.Logger import log
 from messages.common.KeyExchangeMessage import KeyExchangeInitMessage
 from messages.common.Serializable import Serializable
 from messages.common.MessageBuilder import MessageBuilder
+from messages.common.TextMessage import TextMessage
 
 class MessageHandler(EventPublisher):
     def __init__(self):
@@ -38,21 +39,53 @@ class MessageHandler(EventPublisher):
 
 class Client(ABC):
     def __init__(self):
-        self.__connection_handler = ServerConnectionHandler()
+        self._connection_handler = ServerConnectionHandler()
 
     def start(self):
-        self.__connection_handler.with_connection(self.main_loop)
+        self._connection_handler.with_connection(self.main_loop)
 
     @abstractmethod
     def main_loop(self) -> None:
-        while self.__connection_handler.is_running():
-            pass
+        pass
 
 class CMDClient(Client):
 
     def main_loop(self):
         while True:
-            pass
+            self.__print_options()
+            choice = input("-> ")
+            valid, cleaned_choice = self.__validate_input(choice)
+            if (valid):
+                match cleaned_choice:
+                    case 1:
+                        self.__send_msg_to_server()
+                    case _:
+                        print("Missing implementation")
+
+            else:
+                print("Invalid Message")
+
+    def __send_msg_to_server(self):
+        msg = input("Enter Message: ")
+        msg_data = TextMessage(msg)
+        self._connection_handler.send_to_server_encrypted(msg_data)
+        print("Encrypted + Sent")        
+
+    def __validate_input(self, choice: str):
+        valid = [1, 2, 3]
+        try:
+            i = int(choice)      
+            return (i in valid), i
+        except:
+            return False, -1
+
+    def __print_options(self) -> None:
+        print('''
+        Options ... 
+           (1) Send to Server
+           (2) Broadcast to clients
+           (3) Terminate
+        ''')
 
 class ClientDriver:
     def start():

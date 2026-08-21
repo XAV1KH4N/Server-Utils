@@ -31,7 +31,7 @@ class MessageBuilder(SerializerBuilder):
                 return KeyExchangeResponseMessage(msg_map)
             case EncryptedMessage.__name__:
                 return EncryptedMessage(msg_map)
-            case TextMessage():
+            case TextMessage.__name__:
                 return TextMessage(msg_map)
             case _:
                 print("Unexpected message wrapped") 

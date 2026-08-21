@@ -13,6 +13,11 @@ from Server.handler.MessageHandler import MessageHandler
 from ecrypt.EncryptMessageBuilder import EncryptMessageBuilder
 from messages.common.MessageBuilder import MessageBuilder
 
+# Sub Server
+# Extends server?
+# Will have to for passing messages.. Or will it? It has origin/desitnations - so no
+# Message Handler will need to be extends.
+# start with client, main loop
 class Server(EventHandler):
     def __init__(self):
         self.__message_handler = MessageHandler()

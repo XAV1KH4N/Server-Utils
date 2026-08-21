@@ -5,14 +5,16 @@ Encryption
 Login
 - Hashing + salt
 
+Event Bus
+- All events published to a bus/ queue
+- No need for origins/ desitnations, just listen to what you need to
+- Scales nicely
 
 Extra
 - Shouldmt the myenv be in the repo?
 
-Multi Connect
-- Multi connection (Done)
-- Different K (Done)
-
-
 Interface Sub class
 - Client project server / client, sendning messages + broadcasting
+
+Other
+- Purge connections when lost? From connection handler and key handler

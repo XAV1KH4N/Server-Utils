@@ -1,7 +1,8 @@
 import threading
 import socket
 from messages.common.TextMessage import TextMessage
-from common.events.Events import EventPublisher
+from common.events.Events import Event, EventPublisher, EventHandler, EventDesitination
+from common.events.VerifiedEvent import VerifiedEvent
 from common.ConnectionUtils import ConnectionUtils
 from ecrypt.EncryptMessageBuilder import EncryptMessageBuilder
 from messages.common.Serializable import Serializable
@@ -45,6 +46,7 @@ class ServerConnectionHandler(EventPublisher):
     def __init__(self):
         self.__socket = None
         self.__running = False
+        self.__is_verified = False
         self.__message_builder = MessageBuilder()
         self.__key_handler = ClientSideKeyExchangeHandler(91)
         super().__init__()
@@ -58,6 +60,11 @@ class ServerConnectionHandler(EventPublisher):
                 s.connect((ConnectionUtils.HOST, ConnectionUtils.PORT))
                 self.__socket = s
                 self.__run_in_background()
+
+                while not self.__is_verified:
+                    pass
+
+                print("Verified, Starting main loop")
                 main_loop()
 
         except ConnectionRefusedError:
@@ -73,10 +80,8 @@ class ServerConnectionHandler(EventPublisher):
         listener_thread.start()
 
     def __handle_msg_map(self, data: bytes) -> None:
-        #inner_msg = self.__message_builder.extract_message(msg)
         msg = self.__message_builder.rebuild_message(data)
         print("Handling Msg Map", msg)
-        #inner_msg = self.__message_builder.extract_message(msg)
         self.__handle_msg(msg)
 
     def __handle_msg(self, msg: Serializable) -> None:
@@ -87,7 +92,7 @@ class ServerConnectionHandler(EventPublisher):
                 msg = KeyExchangeResponseMessage(self.__key_handler.Y())
                 self.send_to_server(msg)
                 self.send_to_server_encrypted(TextMessage("Hello"))
-                print("Send encrypted")
+                self.__is_verified = True
             case EncryptedMessage():
                 dec_msg = self.encryptor().recreate_message(msg)
                 self.__handle_msg(dec_msg)
