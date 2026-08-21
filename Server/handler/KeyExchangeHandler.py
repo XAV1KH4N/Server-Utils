@@ -1,3 +1,4 @@
+from random import Random
 from RSA.RSAKeyPairGen import RSAKeyPairGen
 from RSA.RSAPrivate import RSAPrivateHandler, RSAPrivateKeyReader
 from common.events.ConnectionId import ConnectionID
@@ -32,8 +33,11 @@ class KeyExchangeHandler(EventHandler, EventPublisher):
     def initiate_new_connection(self, id: ConnectionID):
         handler = self.__new_client()
         handler.register(self)
-        handler.set_up(5, 6)
-        handler.set_up_this_y(9)
+        base = self.__generate_base()
+        prime = self.__generate_prime()
+        y = self.__generate_y()
+        handler.set_up(base, prime)
+        handler.set_up_this_y(y)
         self.__start_key_exchange(handler.get_data(), id)
         self.connections[id] = handler
 
@@ -52,6 +56,15 @@ class KeyExchangeHandler(EventHandler, EventPublisher):
     def on_change(self, event: Event):
         self.publish(event)
 
+    def __generate_base(self) -> int:
+        return Random().randint(0, 1000000) 
+
+    def __generate_y(self) -> int:
+        return Random().randint(0, 1000000) 
+
+    def __generate_prime(self) -> int:
+        return 13
+    
     def __new_client(self):
         return ServerKeyExchangeHandler() 
 
