@@ -7,6 +7,7 @@ from common.logging.Logger import log
 from messages.common.KeyExchangeMessage import KeyExchangeInitMessage
 from messages.common.Serializable import Serializable
 from messages.common.MessageBuilder import MessageBuilder
+from messages.common.TextMessage import TextMessage
 
 class MessageHandler(EventPublisher):
     def __init__(self):
@@ -38,25 +39,24 @@ class MessageHandler(EventPublisher):
 
 class Client(ABC):
     def __init__(self):
-        self.__connection_handler = ServerConnectionHandler()
+        self._connection_handler = ServerConnectionHandler()
 
     def start(self):
-        self.__connection_handler.with_connection(self.main_loop)
+        self._connection_handler.with_connection(self.main_loop)
 
     @abstractmethod
     def main_loop(self) -> None:
-        while self.__connection_handler.is_running():
-            pass
+        pass
 
-class CMDClient(Client):
+class TestClient(Client):
 
     def main_loop(self):
         while True:
             pass
 
-class ClientDriver:
+class TestClientDriver:
     def start():
-        CMDClient().start()
+        TestClient().start()
 
 if __name__ == "__main__":
-    ClientDriver.start()
+    TestClientDriver.start()

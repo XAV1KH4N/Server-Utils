@@ -1,8 +1,9 @@
+from random import Random
 from RSA.RSAKeyPairGen import RSAKeyPairGen
 from RSA.RSAPrivate import RSAPrivateHandler, RSAPrivateKeyReader
-from Server.events import EncryptedMessageEvent
+from common.events.ConnectionId import ConnectionID
 from Server.handler.MessageHandler import KeyExchangeResponseEvent
-from common.events.Events import Event, EventDesitination, EventHandler, EventOrigin, EventPublisher
+from common.events.Events import Event, EventWithId, EventDesitination, EventHandler, EventOrigin, EventPublisher
 from messages.common.KeyExchangeMessage import KeyExchangeData
 from messages.keyExchange.KeyExchanges import KeyExchangeSupport
 
@@ -26,40 +27,57 @@ class ServerKeyExchangeHandler(EventPublisher, KeyExchangeSupport):
 
 class KeyExchangeHandler(EventHandler, EventPublisher):
     def __init__(self):
-        self.connections: list[ServerKeyExchangeHandler] = []
+        self.connections: dict[ConnectionID, ServerKeyExchangeHandler] = {}
         super().__init__()
 
-    def initiate_new_connection(self):
+    def initiate_new_connection(self, id: ConnectionID):
         handler = self.__new_client()
         handler.register(self)
-        handler.set_up(5, 6)
-        handler.set_up_this_y(9)
-        self.__start_key_exchange(handler.get_data())
-        self.connections.append(handler)
+        base = self.__generate_base()
+        prime = self.__generate_prime()
+        y = self.__generate_y()
+        handler.set_up(base, prime)
+        handler.set_up_this_y(y)
+        self.__start_key_exchange(handler.get_data(), id)
+        self.connections[id] = handler
 
     def handle_event(self, event: Event):
         match event:
             case KeyExchangeResponseEvent():
-                self.connections[0].set_up_other_y(event.get_y())
+                id = event.get_id()
+                self.connections[id].set_up_other_y(event.get_y())
                 print("Set up connection")
             case _:
                 print("Unexpected message for key handler")
 
-    def K(self) -> int:
-        return self.connections[0].K()
+    def K(self, id: ConnectionID) -> int:
+        return self.connections[id].K()
 
     def on_change(self, event: Event):
         self.publish(event)
 
+    def __generate_base(self) -> int:
+        return Random().randint(0, 1000000) 
+
+    def __generate_y(self) -> int:
+        return Random().randint(0, 1000000) 
+
+    def __generate_prime(self) -> int:
+        return 13
+    
     def __new_client(self):
         return ServerKeyExchangeHandler() 
 
-    def __start_key_exchange(self, data: KeyExchangeData):
-        self.publish(KeyExchangeStartEvent(data))
+    def __start_key_exchange(self, data: KeyExchangeData, id: ConnectionID):
+        self.publish(KeyExchangeStartEvent(data, id))
 
-class KeyExchangeStartEvent(Event):
-    def __init__(self, msg: KeyExchangeData):
+class KeyExchangeStartEvent(EventWithId):
+    def __init__(self, msg: KeyExchangeData, id: ConnectionID):
         self.__msg = msg
+        self.__id = id
+
+    def get_id(self):
+        return self.__id
 
     def get_data(self) -> KeyExchangeData:
         return self.__msg

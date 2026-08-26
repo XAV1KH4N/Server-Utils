@@ -49,6 +49,7 @@ class EncryptMessageBuilder:
         text = self.__decrypt(msg.get_cipher_bytes(), iv)
         class_name = msg.get_class_name()
         print("Decrypted Bytes", text)
+        print("Class Name", class_name)
         map: dict = json.loads(text.decode(EncryptUtils.ENCODE_TYPE))
         built_msg = {
             Message.ClassNameProperty: class_name,

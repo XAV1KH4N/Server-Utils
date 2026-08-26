@@ -31,13 +31,17 @@ class MessageBuilder(SerializerBuilder):
                 return KeyExchangeResponseMessage(msg_map)
             case EncryptedMessage.__name__:
                 return EncryptedMessage(msg_map)
-            case TextMessage():
+            case TextMessage.__name__:
                 return TextMessage(msg_map)
             case _:
                 print("Unexpected message wrapped") 
+                return None
 
     def rebuild_message(self, data: bytes) -> Message:
         decoded = data.decode(EncryptUtils.ENCODE_TYPE)
         received_data: dict = json.loads(decoded)
         msg = Message(received_data)
-        return self.extract_message(msg)
+        print("Rebuilding + extracting")
+        x = self.extract_message(msg)
+        print("end")
+        return x

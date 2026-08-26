@@ -1,15 +1,21 @@
+from random import Random
 import threading
-from common.events.Events import Event, EventOrigin, EventPublisher, EventDesitination
+from common.events.ConnectionId import ConnectionID
+from common.events.Events import Event, EventOrigin, EventPublisher, EventDesitination, EventWithId
 from messages.common.MessageBuilder import MessageBuilder
 from messages.common.Serializable import Serializable
 
-class ClientConnectionHandler(EventPublisher):
-    def __init__(self, conn, addr):
+
+class ClientConnectionHandler(EventPublisher): 
+    def __init__(self, conn, addr, msg_builder: MessageBuilder):
         self.__conn = conn
-        self.__addr = addr
+        self.__id = ConnectionID(addr)
         self.__is_running = True
-        self.__message_builder = MessageBuilder()
+        self.__message_builder = msg_builder
         super().__init__()
+
+    def get_connection_id(self) -> ConnectionID:
+        return self.__id
 
     def send_to_client(self, msg: Serializable):
         data = self.__message_builder.build_message_bytes(msg)
@@ -32,15 +38,18 @@ class ClientConnectionHandler(EventPublisher):
                         print("Connection terminated by peer")
                         self.__is_running = False
                     else:
-                        self.publish(ClientMessageEvent(data))
+                        self.publish(ClientMessageEvent(data, self.__id))
             except KeyboardInterrupt:
                 print(f"\n[ERROR] Connection error with {self._getAddr()}:")
             finally:
                 self._running = False
+        print("Terminating")
+        
 
-class ClientMessageEvent(Event):
-    def __init__(self, data):
+class ClientMessageEvent(EventWithId):
+    def __init__(self, data, id: ConnectionID):
         self.__data  = data
+        self.__id = id
 
     def get_data(self):
         return self.__data
@@ -50,3 +59,6 @@ class ClientMessageEvent(Event):
     
     def get_origin(self):
         return EventOrigin.COMMUNICATION_HANDLER
+
+    def get_id(self) -> ConnectionID:
+        return self.__id

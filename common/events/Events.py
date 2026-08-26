@@ -2,6 +2,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from enum import Enum
 
+from common.events.ConnectionId import ConnectionID
+
 class Event(ABC):
     
     @abstractmethod
@@ -12,6 +14,13 @@ class Event(ABC):
     def get_origin(self) -> EventOrigin:
         pass 
 
+class EventWithId(Event):
+    
+    @abstractmethod
+    def get_id(self) -> ConnectionID:
+        pass 
+
+
 class EventDesitination(Enum):
     ALL = 0
     MESSAGE_HANDLER = 1
@@ -19,6 +28,7 @@ class EventDesitination(Enum):
     SERVER = 3
     CLIENT = 4
     KEY_EXCHANGE_HANDLER = 5
+    CLIENT_SERVER_HANDLER = 6
 
 class EventOrigin(Enum):
     MESSAGE_HANDLER = 1
