@@ -18,3 +18,4 @@ Interface Sub class
 
 Other
 - Purge connections when lost? From connection handler and key handler
+- logging (timetamps + class)

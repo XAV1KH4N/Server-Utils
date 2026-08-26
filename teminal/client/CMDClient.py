@@ -1,5 +1,6 @@
 from messages.common.TextMessage import TextMessage
 from client.client import Client
+from teminal.common.messages.Broadcast import BroadcastMessage
 
 class CMDClient(Client):
 
@@ -12,6 +13,8 @@ class CMDClient(Client):
                 match cleaned_choice:
                     case 1:
                         self.__send_msg_to_server()
+                    case 2:
+                        self.__handle_broadcast()
                     case _:
                         print("Missing implementation")
 
@@ -23,6 +26,12 @@ class CMDClient(Client):
         msg_data = TextMessage(msg)
         self._connection_handler.send_to_server_encrypted(msg_data)
         print("Encrypted + Sent")        
+
+    def __handle_broadcast(self):
+        msg = input("Enter Message: ")
+        msg_data = BroadcastMessage(msg)
+        self._connection_handler.send_to_server_encrypted(msg_data)
+        print("Encrypted + Broadcasted")
 
     def __validate_input(self, choice: str):
         valid = [1, 2, 3]

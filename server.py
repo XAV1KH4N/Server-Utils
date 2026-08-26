@@ -150,7 +150,6 @@ class TestServerSupport(ServerSupport): # Multiple server connection handlers, b
 
     def _handleData(self, data: dict):
         className = data[Serializable.ClassName]
-        print("Class name", className)
         if (className == SendTextMessage.__name__):
             textMsg = SendTextMessage(data)
             text = textMsg.getText()

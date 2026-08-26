@@ -7,11 +7,11 @@ from messages.common.Serializable import Serializable
 
 
 class ClientConnectionHandler(EventPublisher): 
-    def __init__(self, conn, addr):
+    def __init__(self, conn, addr, msg_builder: MessageBuilder):
         self.__conn = conn
         self.__id = ConnectionID(addr)
         self.__is_running = True
-        self.__message_builder = MessageBuilder()
+        self.__message_builder = msg_builder
         super().__init__()
 
     def get_connection_id(self) -> ConnectionID:
