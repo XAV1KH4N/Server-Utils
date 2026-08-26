@@ -3,9 +3,12 @@ from client.client import Client
 from teminal.common.messages.Broadcast import BroadcastMessage
 
 class CMDClient(Client):
+    def __init__(self):
+        super().__init__()
+        self.__running = True
 
     def main_loop(self):
-        while True:
+        while self.__running:
             self.__print_options()
             choice = input("-> ")
             valid, cleaned_choice = self.__validate_input(choice)
@@ -15,6 +18,8 @@ class CMDClient(Client):
                         self.__send_msg_to_server()
                     case 2:
                         self.__handle_broadcast()
+                    case 3:
+                        self.__running = False
                     case _:
                         print("Missing implementation")
 
