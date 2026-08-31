@@ -19,3 +19,7 @@ Interface Sub class
 Other
 - Purge connections when lost? From connection handler and key handler
 - logging (timetamps + class)
+- move sever to mongo or a seperate docket
+
+Move events to bus
+Message handler will recieve messages and wrap them in events - Never send serializable messages
