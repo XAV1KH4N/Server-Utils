@@ -1,6 +1,7 @@
 from Server.connections.ConnectionHandler import ConnectionHandler
 from Server.handler.KeyExchangeHandler import KeyExchangeHandler
 from Server.serverModule import ServerBuilder, Server
+from common.events import EventBus
 from common.events.Events import Event, EventOrigin
 from messages.common.TextMessage import TextMessage
 from teminal.server.CMDMessageHandler import BroadcastAllEvent, CMDMessageHandler
@@ -19,9 +20,10 @@ class CMDServer(Server):
 
 class CMDServerBuilder(ServerBuilder):
     def build(self) -> Server:
-        msg_handler = CMDMessageHandler()
-        conn_handler = CMDConnectionHandler()
-        key_handler = KeyExchangeHandler()
+        event_bus = EventBus()
+        msg_handler = CMDMessageHandler(event_bus)
+        conn_handler = CMDConnectionHandler(event_bus)
+        key_handler = KeyExchangeHandler(event_bus)
         return Server(msg_handler, conn_handler, key_handler)
 
 class CMDServerDriver:

@@ -1,6 +1,7 @@
 from abc import ABC
 import socket 
 
+from common.events.EventBus import EventBus
 from common.events.ConnectionId import ConnectionID
 from Server.connections.ConnectionHandler import ConnectionHandler
 from Server.events.EncryptedMessageEvent import EncryptedMessageEvent
@@ -14,8 +15,8 @@ from Server.handler.MessageHandler import MessageHandler
 from ecrypt.EncryptMessageBuilder import EncryptMessageBuilder
 from messages.common.MessageBuilder import MessageBuilder
 
-class Server(EventHandler):
-    def __init__(self, msg_handler: MessageHandler, conn_handler: ConnectionHandler, key_handler: KeyExchangeHandler):
+class Server(EventHandler): # Do all at once
+    def __init__(self, msg_handler: MessageHandler, conn_handler: ConnectionHandler, key_handler: KeyExchangeHandler, event_bus):
         self.__message_handler = msg_handler
         self._connection_handler = conn_handler
         self.__key_exchange_manager = key_handler
