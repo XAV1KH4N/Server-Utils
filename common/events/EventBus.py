@@ -1,4 +1,4 @@
-from common.events.Events import Event, EventHandler, EventPublisher, EventWithId
+from common.events.Events import Event, EventHandler, EventWithId
 
 class EventBus:
     __INSTANCES = 0
@@ -14,10 +14,6 @@ class EventBus:
         self.__handlers.remove(handler)
 
     def publish(self, event: Event) -> None:
-        for handler in self.__handlers:
-            handler.on_change(event)
-
-    def publish(self, event: EventWithId) -> None: 
         for handler in self.__handlers:
             handler.on_change(event)
 

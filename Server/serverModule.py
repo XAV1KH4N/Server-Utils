@@ -7,39 +7,27 @@ from Server.connections.ConnectionHandler import ConnectionHandler
 from Server.events.EncryptedMessageEvent import EncryptedMessageEvent
 from Server.handler.KeyExchangeHandler import KeyExchangeHandler
 from common.ConnectionUtils import ConnectionUtils
-from common.logging.Logger import log
-from common.events.Events import Event, EventHandler, EventDesitination
+from common.logging.Logger import Logger, log
+from common.events.Events import Event, EventHandler
 from messages.common.Messages import EncryptedMessage
 from messages.common.Serializable import Serializable
 from Server.handler.MessageHandler import MessageHandler
 from ecrypt.EncryptMessageBuilder import EncryptMessageBuilder
-from messages.common.MessageBuilder import MessageBuilder
 
-class Server(EventHandler): # Do all at once
-    def __init__(self, msg_handler: MessageHandler, conn_handler: ConnectionHandler, key_handler: KeyExchangeHandler, event_bus):
+class Server(EventHandler, Logger): # Do all at once
+    def __init__(self, msg_handler: MessageHandler, conn_handler: ConnectionHandler, key_handler: KeyExchangeHandler, event_bus: EventBus):
         self.__message_handler = msg_handler
         self._connection_handler = conn_handler
         self.__key_exchange_manager = key_handler
+        self.__event_bus = event_bus
 
     def start(self):
         self.__add_listeners()
         self.__listen_loop()
+        self.__event_bus.subscribe(self)
 
     def on_change(self, event: Event):
-        match event.get_destination():
-            case EventDesitination.MESSAGE_HANDLER:
-                self.__message_handler.handle_event(event)
-            case EventDesitination.COMMUNICATION_HANDLER:
-                self._connection_handler.handle_event(event)
-            case EventDesitination.KEY_EXCHANGE_HANDLER:
-                self.__key_exchange_manager.handle_event(event)
-            case EventDesitination.SERVER:
-                self.__handle_event(event)
-            case _ : 
-                log("Event has unknown location", event.get_destination())
-
-    def __handle_event(self, event: Event) -> bool:
-        print("Handling event", event.__class__.__name__)
+        self.log3("Handling event", event.__class__.__name__)
         match event:
             case EncryptedMessageEvent():
                 msg = event.get_msg()
@@ -47,9 +35,7 @@ class Server(EventHandler): # Do all at once
                 dec_msg = self.__decrypt__message(msg, id)
                 self.__message_handler.handle_msg(dec_msg, id)
             case _:
-                print("Unhandled event for server")
-                return False
-        return True
+                pass
 
     def __encryptor_for(self, id: ConnectionID) -> EncryptMessageBuilder:
         k = self.__key_exchange_manager.K(id)
@@ -62,11 +48,6 @@ class Server(EventHandler): # Do all at once
         dec_msg = enc_builder.recreate_message(msg)
         return dec_msg
     
-    def __add_listeners(self):
-        self._connection_handler.register(self)
-        self.__message_handler.register(self)
-        self.__key_exchange_manager.register(self)
-
     def __listen_loop(self):
         print("Entering Main Loop")
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:

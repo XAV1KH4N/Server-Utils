@@ -1,5 +1,5 @@
 from unittest import TestCase, main
-from common.events.Events import Event,  EventOrigin, EventDesitination, EventHandler, EventPublisher
+from common.events.Events import Event, EventHandler, EventPublisher
 
 class TestEvents(TestCase):
 
@@ -98,12 +98,6 @@ class TestEvents(TestCase):
 class TestEvent(Event):
     def __init__(self, data: str):
         self.__data = data
-
-    def get_destination(self) -> Event:
-        return EventDesitination.ALL
-
-    def get_origin(self) -> EventOrigin:
-        return EventOrigin.MESSAGE_HANDLER
 
     def getData(self) -> str:
         return self.__data

@@ -1,5 +1,5 @@
 from common.events.ConnectionId import ConnectionID
-from common.events.Events import Event, EventWithId, EventDesitination, EventOrigin
+from common.events.Events import EventWithId
 from messages.common.Messages import EncryptedMessage
 
 class EncryptedMessageEvent(EventWithId):
@@ -12,11 +12,5 @@ class EncryptedMessageEvent(EventWithId):
 
     def get_msg(self) -> EncryptedMessage:
         return self.__msg
-    
-    def get_destination(self) -> EventDesitination:
-        return EventDesitination.SERVER
-
-    def get_origin(self) -> EventOrigin:
-        return EventOrigin.MESSAGE_HANDLER
 
         

@@ -3,13 +3,13 @@ from RSA.RSAKeyPairGen import RSAKeyPairGen
 from RSA.RSAPrivate import RSAPrivateHandler, RSAPrivateKeyReader
 from common.events.ConnectionId import ConnectionID
 from Server.handler.MessageHandler import KeyExchangeResponseEvent
-from common.events.Events import Event, EventWithId, EventDesitination, EventHandler, EventOrigin, EventPublisher
+from common.events.EventBus import EventBus
+from common.events.Events import Event, EventWithId, EventHandler
 from messages.common.KeyExchangeMessage import KeyExchangeData
 from messages.keyExchange.KeyExchanges import KeyExchangeSupport
 
-class ServerKeyExchangeHandler(EventPublisher, KeyExchangeSupport):
+class ServerKeyExchangeHandler(KeyExchangeSupport):
     def __init__(self):
-        EventPublisher.__init__(self)
         KeyExchangeSupport.__init__(self)
 
     def __private_key(self) -> RSAPrivateHandler:
@@ -25,14 +25,14 @@ class ServerKeyExchangeHandler(EventPublisher, KeyExchangeSupport):
         return KeyExchangeData(self.Y(), self.signed_Y(), self._base, self._prime)
     
 
-class KeyExchangeHandler(EventHandler, EventPublisher):
-    def __init__(self):
+class KeyExchangeHandler(EventHandler):
+    def __init__(self, event_bus: EventBus):
         self.connections: dict[ConnectionID, ServerKeyExchangeHandler] = {}
-        super().__init__()
+        self.event_bus = event_bus
+        self.event_bus.subscribe(event_bus)
 
     def initiate_new_connection(self, id: ConnectionID):
         handler = self.__new_client()
-        handler.register(self)
         base = self.__generate_base()
         prime = self.__generate_prime()
         y = self.__generate_y()
@@ -54,7 +54,7 @@ class KeyExchangeHandler(EventHandler, EventPublisher):
         return self.connections[id].K()
 
     def on_change(self, event: Event):
-        self.publish(event)
+        self.event_bus.publish(event)
 
     def __generate_base(self) -> int:
         return Random().randint(0, 1000000) 
@@ -69,7 +69,7 @@ class KeyExchangeHandler(EventHandler, EventPublisher):
         return ServerKeyExchangeHandler() 
 
     def __start_key_exchange(self, data: KeyExchangeData, id: ConnectionID):
-        self.publish(KeyExchangeStartEvent(data, id))
+        self.event_bus.publish(KeyExchangeStartEvent(data, id))
 
 class KeyExchangeStartEvent(EventWithId):
     def __init__(self, msg: KeyExchangeData, id: ConnectionID):
@@ -81,9 +81,3 @@ class KeyExchangeStartEvent(EventWithId):
 
     def get_data(self) -> KeyExchangeData:
         return self.__msg
-
-    def get_destination(self):
-        return EventDesitination.COMMUNICATION_HANDLER
-    
-    def get_origin(self):
-        return EventOrigin.KEY_EXCHANGE_HANDLER

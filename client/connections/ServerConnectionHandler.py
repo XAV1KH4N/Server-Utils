@@ -1,8 +1,6 @@
 import threading
 import socket
 from messages.common.TextMessage import TextMessage
-from common.events.Events import Event, EventPublisher, EventHandler, EventDesitination
-from common.events.VerifiedEvent import VerifiedEvent
 from common.ConnectionUtils import ConnectionUtils
 from ecrypt.EncryptMessageBuilder import EncryptMessageBuilder
 from messages.common.Serializable import Serializable
@@ -42,14 +40,13 @@ class ClientSideKeyExchangeHandler(KeyExchangeSupport):
         reader = RSAPublicKeyReader(RSAKeyPairGen.PUBLIC_PATH)
         return reader.handler()
 
-class ServerConnectionHandler(EventPublisher):
+class ServerConnectionHandler:
     def __init__(self):
         self.__socket = None
         self.__running = False
         self.__is_verified = False
         self.__message_builder = MessageBuilder()
         self.__key_handler = ClientSideKeyExchangeHandler(91)
-        super().__init__()
 
     def is_running(self) -> bool: 
         return self.__running

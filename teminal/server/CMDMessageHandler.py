@@ -1,6 +1,6 @@
 from Server.handler.MessageHandler import MessageHandler
 from common.events.ConnectionId import ConnectionID
-from common.events.Events import Event, EventDesitination, EventOrigin, EventWithId
+from common.events.Events import EventWithId
 from messages.common.MessageBuilder import MessageBuilder
 from messages.common.Messages import Message
 from messages.common.Serializable import Serializable
@@ -36,7 +36,7 @@ class CMDMessageHandler(MessageHandler):
 
         match msg:
             case BroadcastMessage():
-                self.publish(BroadcastAllEvent(msg.getText(), id))
+                self.event_bus.publish(BroadcastAllEvent(msg.getText(), id))
             case _ :
                 print("Unhandled client message (CMD)", msg.__class__.__name__) 
                 return False
@@ -50,12 +50,6 @@ class BroadcastAllEvent(EventWithId):
 
     def get_text(self) -> str:
         return self.text
-
-    def get_origin(self) -> EventOrigin:
-        return EventOrigin.MESSAGE_HANDLER
-
-    def get_destination(self) -> EventDesitination:
-        return EventDesitination.COMMUNICATION_HANDLER 
 
     def get_id(self) -> ConnectionID:
         return self.id        

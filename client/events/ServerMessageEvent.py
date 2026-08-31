@@ -1,4 +1,4 @@
-from common.events.Events import Event, EventDesitination, EventOrigin
+from common.events.Events import Event
 from messages.common.Serializable import Serializable
 
 class ServerMessageEvent(Event):
@@ -7,10 +7,3 @@ class ServerMessageEvent(Event):
 
     def getMsg(self) -> Serializable:
         return self.__msg
-
-    def get_destination(self):
-        return EventDesitination.MESSAGE_HANDLER
-    
-    def get_origin(self):
-        return EventOrigin.COMMUNICATION_HANDLER
-
