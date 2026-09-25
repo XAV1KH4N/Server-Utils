@@ -14,6 +14,7 @@ class EventBus:
         self.__handlers.remove(handler)
 
     def publish(self, event: Event) -> None:
+        print("Publish:", event.__class__.__name__)
         for handler in self.__handlers:
             handler.on_change(event)
 

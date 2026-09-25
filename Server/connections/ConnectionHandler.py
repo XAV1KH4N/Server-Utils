@@ -20,12 +20,12 @@ class ConnectionHandler:
         handler.run_in_background()
         return id
 
-    def handle_key_exchange_event(self, event: Event):
-        if isinstance(event, KeyExchangeStartEvent):
-            key_data = event.get_data()
-            id = event.get_id()
-            msg = KeyExchangeInitMessage(key_data)
-            self._connections[id].send_to_client(msg)
-
     def on_change(self, event: Event):
-        pass
+        match event:
+            case KeyExchangeStartEvent():
+                key_data = event.get_data()
+                id = event.get_id()
+                msg = KeyExchangeInitMessage(key_data)
+                self._connections[id].send_to_client(msg)
+            case _:
+                pass

@@ -41,7 +41,5 @@ class MessageBuilder(SerializerBuilder):
         decoded = data.decode(EncryptUtils.ENCODE_TYPE)
         received_data: dict = json.loads(decoded)
         msg = Message(received_data)
-        print("Rebuilding + extracting")
         x = self.extract_message(msg)
-        print("end")
         return x

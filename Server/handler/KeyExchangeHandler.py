@@ -29,7 +29,7 @@ class KeyExchangeHandler(EventHandler):
     def __init__(self, event_bus: EventBus):
         self.connections: dict[ConnectionID, ServerKeyExchangeHandler] = {}
         self.event_bus = event_bus
-        self.event_bus.subscribe(event_bus)
+        self.event_bus.subscribe(self)
 
     def initiate_new_connection(self, id: ConnectionID):
         handler = self.__new_client()
@@ -41,21 +41,18 @@ class KeyExchangeHandler(EventHandler):
         self.__start_key_exchange(handler.get_data(), id)
         self.connections[id] = handler
 
-    def handle_event(self, event: Event):
+    def K(self, id: ConnectionID) -> int:
+        return self.connections[id].K()
+
+    def on_change(self, event: Event):
         match event:
             case KeyExchangeResponseEvent():
                 id = event.get_id()
                 self.connections[id].set_up_other_y(event.get_y())
                 print("Set up connection")
             case _:
-                print("Unexpected message for key handler")
-
-    def K(self, id: ConnectionID) -> int:
-        return self.connections[id].K()
-
-    def on_change(self, event: Event):
-        self.event_bus.publish(event)
-
+                pass
+    
     def __generate_base(self) -> int:
         return Random().randint(0, 1000000) 
 

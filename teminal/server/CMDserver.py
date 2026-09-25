@@ -35,7 +35,7 @@ class CMDServerDriver:
 class CMDConnectionHandler(ConnectionHandler):
 
     def on_change(self, event: Event):
-        super().on_change()
+        super().on_change(event)
 
         if isinstance(event, BroadcastAllEvent):
             id = event.get_id()

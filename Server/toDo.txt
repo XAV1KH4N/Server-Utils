@@ -13,7 +13,6 @@ Event Bus
 - Then renme to event, and then eventWithoutId (Maybe for event specific stuff)
 - Remove origin + Destination
 
-
 Extra
 - Shouldmt the myenv be in the repo?
 

@@ -20,14 +20,12 @@ class Server(EventHandler, Logger): # Do all at once
         self._connection_handler = conn_handler
         self.__key_exchange_manager = key_handler
         self.__event_bus = event_bus
-
-    def start(self):
-        self.__add_listeners()
-        self.__listen_loop()
         self.__event_bus.subscribe(self)
 
+    def start(self):
+        self.__listen_loop()
+
     def on_change(self, event: Event):
-        self.log3("Handling event", event.__class__.__name__)
         match event:
             case EncryptedMessageEvent():
                 msg = event.get_msg()
@@ -75,7 +73,7 @@ class ServerBuilder(ABC):
         pass
 
 class TestServerBUilder(ServerBuilder):
-    def build() -> Server:
+    def build(self) -> Server:
         msg_handler = MessageHandler()
         conn_handler = ConnectionHandler()
         key_handler = KeyExchangeHandler()

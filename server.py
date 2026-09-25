@@ -50,7 +50,7 @@ class ServerSupport(ABC):
 
     def __updateState(self, newState: ConnectionStatus):
         self._status = newState
-        self._sendToClient(UserLoginStatus(newState))
+        self._send_to_client(UserLoginStatus(newState))
         
     def __handlePendingData(self, data: dict):
         if (not self.__encrypt.isSecure()):
@@ -123,9 +123,9 @@ class ServerSupport(ABC):
         msg = self.__encrypt.intialMessage()
         print(msg)
         print(msg.to_map())
-        self._sendToClient(msg)
+        self._send_to_client(msg)
 
-    def _sendToClient(self, msg: Serializable):
+    def _send_to_client(self, msg: Serializable):
         classMap = {
             Serializable.ClassName: type(msg).__name__
         }
@@ -135,7 +135,7 @@ class ServerSupport(ABC):
 
     def _sendTextToClient(self, string: str):
         msg = SendTextMessage(string)
-        self._sendToClient(msg)
+        self._send_to_client(msg)
 
 class TestServerSupport(ServerSupport): # Multiple server connection handlers, but only one "server", it will just have lots of conenctions. Gotta manage this
     def __init__(self, conn, addr, encrypt: EncryptSupport):
