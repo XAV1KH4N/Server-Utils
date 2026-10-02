@@ -12,7 +12,7 @@ class CMDMessageHandler(MessageHandler):
         return CMDMessageBuilder()
 
     def extract_message(self, message: Message) -> Serializable:        
-        self.log("Extract messge (CMD)")
+        self.logInfo("Extract messge (CMD)")
         msg = super().extract_message(message)
 
         if (msg != None):
