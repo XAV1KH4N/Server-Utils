@@ -12,11 +12,11 @@ class CMDMessageHandler(MessageHandler):
         return CMDMessageBuilder()
 
     def extract_message(self, message: Message) -> Serializable:        
-        print("Extract messge (CMD)")
+        self.logInfo("Extract messge (CMD)")
         msg = super().extract_message(message)
 
         if (msg != None):
-            print("Returned early, found message (CMD)")
+            self.logInfo("Returned early, found message (CMD)")
             return msg
 
         msg_map = message.get_msg_map()
@@ -25,7 +25,7 @@ class CMDMessageHandler(MessageHandler):
             case BroadcastMessage.__name__:
                 return BroadcastMessage(msg_map)
             case _:
-                print("Unexpected message wrapped (CMD)") 
+                self.logError("Unexpected message wrapped (CMD)") 
                 return None
 
     def handle_msg(self, msg: Serializable, id: ConnectionID):
@@ -38,7 +38,7 @@ class CMDMessageHandler(MessageHandler):
             case BroadcastMessage():
                 self.event_bus.publish(BroadcastAllEvent(msg.getText(), id))
             case _ :
-                print("Unhandled client message (CMD)", msg.__class__.__name__) 
+                self.logError("Unhandled client message (CMD)", msg.__class__.__name__) 
                 return False
         return True
 

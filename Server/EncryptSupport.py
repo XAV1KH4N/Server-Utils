@@ -3,11 +3,12 @@ from RSA.RSAPrivate import RSAPrivateKeyReader
 from RSA.RSAKeyPairGen import RSAKeyPairGen
 from cryptography.hazmat.primitives.hashes import Hash
 from cryptography.hazmat.primitives import hashes
+from common.logging.Logger import Logger
 from messages.VerificationMessage import VerificationMessage, VerificationMessageData, VerificationStatus
 from RSA.DiffeHellam import DiffeHellam
 
 
-class EncryptSupport:
+class EncryptSupport(Logger):
     Y: int = 1031 # This is not the secret number // per connection
     P: int = 13
     B: int = 6
@@ -38,7 +39,7 @@ class EncryptSupport:
          
     def __loadPrivateHandler(self):
         if (not self.__fileExists(RSAKeyPairGen.PRIVATE_PATH)):
-            print("Generated")
+            self.logInfo("Generated")
             gen = RSAKeyPairGen()
             gen.refreshKeys()
             
@@ -48,7 +49,7 @@ class EncryptSupport:
     def __fileExists(self, path):
         return os.path.exists(path)
     
-class EncrpytConnectionSupport:
+class EncrpytConnectionSupport(Logger):
     def __init__(self, encrypt: EncryptSupport):       
         self.__status = VerificationStatus.PRE
         self.__encrypt = encrypt
@@ -56,7 +57,7 @@ class EncrpytConnectionSupport:
 
     def intialMessage(self):
         self.__status = VerificationStatus.SENT
-        print("Creating Message")
+        self.logInfo("Creating Message")
         
         #y = self.__encrypt.y()
         self.__diffe.updateFromInts(self.__encrypt.b(), self.__encrypt.prime())

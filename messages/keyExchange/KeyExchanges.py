@@ -1,6 +1,7 @@
 from common.EncyptUtils import EncryptUtils
+from common.logging.Logger import Logger
 
-class KeyExchangeSupport:
+class KeyExchangeSupport(Logger):
     def __init__(self):
         self._y = -1
         self._prime = -1
@@ -32,5 +33,5 @@ class KeyExchangeSupport:
     
     def K(self) -> int:
         k =  pow(self._other_Y, self._y, self._prime)   
-        print("k", k, "prime", self._prime, "base", self._base, "y", self._y, "Other y", self._other_Y)
+        self.logInfo("k", k, "prime", self._prime, "base", self._base, "y", self._y, "Other y", self._other_Y)
         return k

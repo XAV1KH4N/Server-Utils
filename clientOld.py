@@ -131,7 +131,7 @@ class ClientSupport(ABC, Logger):
                     receivedData: dict = json.loads(decoded)
                     self.__handleData(receivedData)
         except KeyboardInterrupt as ex:
-            print(f"[ERROR] {ex}")
+            self.logError(f"{ex}")
             self._terminate()
 
     def _sendToServer(self, serializable: Serializable):
@@ -203,23 +203,23 @@ class TestClient(ClientSupport):
         msg = SendTextMessage(str)
         self._sendToServer(msg)
 
-class Driver:
+class Driver(Logger):
     def __init__(self):
         self.start()
 
     def start(self):
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                print(f"Connecting to {cg.Config.HOST}:{cg.Config.PORT}...")
+                self.logInfo(f"Connecting to {cg.Config.HOST}:{cg.Config.PORT}...")
                 s.connect((cg.Config.HOST, cg.Config.PORT))
                 
                 client = TestClient(s)
                 client.run()
                 
         except ConnectionRefusedError:
-            print("[ERROR] Could not connect to server")
+            self.logError("Could not connect to server")
         except KeyboardInterrupt:
-            print("\nForce quitting...")
+            self.logInfo("\nForce quitting...")
 
 if __name__ == "__main__":
     Driver()

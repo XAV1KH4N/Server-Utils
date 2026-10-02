@@ -1,3 +1,4 @@
+from common.logging.Logger import Logger
 from messages.common.TextMessage import TextMessage
 from messages.common.KeyExchangeMessage import KeyExchangeInitMessage, KeyExchangeResponseMessage
 from messages.common.Serializable import Serializable, SerializerBuilder
@@ -6,7 +7,7 @@ from ecrypt.EncryptMessageBuilder import EncryptMessageBuilder
 from common.EncyptUtils import EncryptUtils
 import json
 
-class MessageBuilder(SerializerBuilder):
+class MessageBuilder(SerializerBuilder, Logger):
 
     def build_message(self, map: dict) -> Serializable: 
         return self.extract_message(Message(map))
@@ -34,7 +35,7 @@ class MessageBuilder(SerializerBuilder):
             case TextMessage.__name__:
                 return TextMessage(msg_map)
             case _:
-                print("Unexpected message wrapped") 
+                self.logInfo("Unexpected message wrapped") 
                 return None
 
     def rebuild_message(self, data: bytes) -> Message:

@@ -2,10 +2,11 @@ import threading
 from common.events.ConnectionId import ConnectionID
 from common.events.EventBus import EventBus
 from common.events.Events import EventWithId
+from common.logging.Logger import Logger
 from messages.common.MessageBuilder import MessageBuilder
 from messages.common.Serializable import Serializable
 
-class ClientConnectionHandler: 
+class ClientConnectionHandler(Logger): 
     def __init__(self, conn, addr, msg_builder: MessageBuilder, event_bus: EventBus):
         self.__conn = conn
         self.__id = ConnectionID(addr)
@@ -19,7 +20,7 @@ class ClientConnectionHandler:
     def send_to_client(self, msg: Serializable):
         data = self.__message_builder.build_message_bytes(msg)
         self.__conn.sendall(data)
-        print("Sent", msg.__class__.__name__)
+        self.logInfo("Sent", msg.__class__.__name__)
 
     def run_in_background(self):
         listener = threading.Thread(target=self.__listen_loop)
@@ -27,22 +28,22 @@ class ClientConnectionHandler:
         listener.start()
 
     def __listen_loop(self):
-        print("Listening")
+        self.logInfo("Listening")
         with self.__conn:
             try:
                 while self.__is_running:
                     data = self.__conn.recv(1024)
-                    print("data ", data)
+                    self.logInfo("data ", data)
                     if not data:
-                        print("Connection terminated by peer")
+                        self.logWarning("Connection terminated by peer")
                         self.__is_running = False
                     else:
                         self.__event_bus.publish(ClientMessageEvent(data, self.__id))
             except KeyboardInterrupt:
-                print(f"\n[ERROR] Connection error with {self._getAddr()}:")
+                self.logError(f"\nConnection error with {self._getAddr()}:")
             finally:
                 self._running = False
-        print("Terminating")
+        self.logInfo("Terminating")
         
 
 class ClientMessageEvent(EventWithId):

@@ -1,8 +1,9 @@
+from common.logging.Logger import Logger
 from messages.common.TextMessage import TextMessage
 from client.client import Client
 from teminal.common.messages.Broadcast import BroadcastMessage
 
-class CMDClient(Client):
+class CMDClient(Client, Logger):
     def __init__(self):
         super().__init__()
         self.__running = True
@@ -21,22 +22,22 @@ class CMDClient(Client):
                     case 3:
                         self.__running = False
                     case _:
-                        print("Missing implementation")
+                        self.logError("Missing implementation")
 
             else:
-                print("Invalid Message")
+                self.logWarning("Invalid Message")
 
     def __send_msg_to_server(self):
         msg = input("Enter Message: ")
         msg_data = TextMessage(msg)
         self._connection_handler.send_to_server_encrypted(msg_data)
-        print("Encrypted + Sent")        
+        self.logInfo("Encrypted + Sent")        
 
     def __handle_broadcast(self):
         msg = input("Enter Message: ")
         msg_data = BroadcastMessage(msg)
         self._connection_handler.send_to_server_encrypted(msg_data)
-        print("Encrypted + Broadcasted")
+        self.logInfo("Encrypted + Broadcasted")
 
     def __validate_input(self, choice: str):
         valid = [1, 2, 3]

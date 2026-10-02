@@ -3,6 +3,7 @@ from Server.handler.KeyExchangeHandler import KeyExchangeHandler
 from Server.serverModule import ServerBuilder, Server
 from common.events.EventBus import EventBus
 from common.events.Events import Event
+from common.logging.Logger import Logger
 from messages.common.TextMessage import TextMessage
 from teminal.server.CMDMessageHandler import BroadcastAllEvent, CMDMessageHandler
 
@@ -14,7 +15,7 @@ class CMDServer(Server):
 
         match event:
             case _:
-                print("Unhandled event for server (CMD)")
+                self.logError("Unhandled event for server (CMD)")
                 return False
         return True
 
@@ -32,7 +33,7 @@ class CMDServerDriver:
         server = CMDServerBuilder().build()
         server.start()
 
-class CMDConnectionHandler(ConnectionHandler):
+class CMDConnectionHandler(ConnectionHandler, Logger):
 
     def on_change(self, event: Event):
         super().on_change(event)
@@ -41,7 +42,7 @@ class CMDConnectionHandler(ConnectionHandler):
             id = event.get_id()
             text = event.get_text()
             msg = TextMessage(text)
-            print("Sending to client")
+            self.logInfo("Sending to client")
             for conn in self._connections:
                 if not conn.is_id(id):
                     self._connections[conn].send_to_client(msg)

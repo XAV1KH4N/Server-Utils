@@ -5,6 +5,7 @@ from common.events.ConnectionId import ConnectionID
 from Server.handler.MessageHandler import KeyExchangeResponseEvent
 from common.events.EventBus import EventBus
 from common.events.Events import Event, EventWithId, EventHandler
+from common.logging.Logger import Logger
 from messages.common.KeyExchangeMessage import KeyExchangeData
 from messages.keyExchange.KeyExchanges import KeyExchangeSupport
 
@@ -25,7 +26,7 @@ class ServerKeyExchangeHandler(KeyExchangeSupport):
         return KeyExchangeData(self.Y(), self.signed_Y(), self._base, self._prime)
     
 
-class KeyExchangeHandler(EventHandler):
+class KeyExchangeHandler(EventHandler, Logger):
     def __init__(self, event_bus: EventBus):
         self.connections: dict[ConnectionID, ServerKeyExchangeHandler] = {}
         self.event_bus = event_bus
@@ -49,7 +50,7 @@ class KeyExchangeHandler(EventHandler):
             case KeyExchangeResponseEvent():
                 id = event.get_id()
                 self.connections[id].set_up_other_y(event.get_y())
-                print("Set up connection")
+                self.logInfo("Set up connection")
             case _:
                 pass
     

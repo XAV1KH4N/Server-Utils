@@ -1,5 +1,6 @@
 import threading
 import socket
+from common.logging.Logger import Logger
 from messages.common.TextMessage import TextMessage
 from common.ConnectionUtils import ConnectionUtils
 from ecrypt.EncryptMessageBuilder import EncryptMessageBuilder
@@ -16,7 +17,7 @@ class EncryptionHandler:
     def __init__(self):
         pass
 
-class ClientSideKeyExchangeHandler(KeyExchangeSupport):
+class ClientSideKeyExchangeHandler(KeyExchangeSupport, Logger):
     def __init__(self, y: int):
         self.is_enabled = False
         self.set_up_this_y(y)
@@ -28,19 +29,19 @@ class ClientSideKeyExchangeHandler(KeyExchangeSupport):
 
         self.set_up_other_y(msg.get_Y())
         self.set_up(msg.get_base(), msg.get_prime())
-        print("Setted Up", self.K())
+        self.logDebug("Setted Up", self.K())
 
     def verify_signature(self, Y: int, signature: bytes):
         key_handler = self.__load_public_key_handler()
         y_bytes = EncryptUtils.to_bytes(Y)
         key_handler.verify_message(y_bytes, signature)
-        print("Verified")
+        self.logInfo("Verified")
 
     def __load_public_key_handler(self):
         reader = RSAPublicKeyReader(RSAKeyPairGen.PUBLIC_PATH)
         return reader.handler()
 
-class ServerConnectionHandler:
+class ServerConnectionHandler(Logger):
     def __init__(self):
         self.__socket = None
         self.__running = False
@@ -61,13 +62,13 @@ class ServerConnectionHandler:
                 while not self.__is_verified:
                     pass
 
-                print("Verified, Starting main loop")
+                self.logInfo("Verified, Starting main loop")
                 main_loop()
 
         except ConnectionRefusedError:
-            print("[ERROR] Could not connect to server")
+            self.logError("Could not connect to server")
         except KeyboardInterrupt:
-            print("\nForce quitting...")
+            self.logInfo("\nForce quitting...")
 
     def __run_in_background(self):
         self.__running = True
@@ -78,13 +79,13 @@ class ServerConnectionHandler:
 
     def __handle_msg_map(self, data: bytes) -> None:
         msg = self.__message_builder.rebuild_message(data)
-        print("Handling Msg Map", msg)
+        self.logInfo("Handling Msg Map", msg)
         self.__handle_msg(msg)
 
     def __handle_msg(self, msg: Serializable) -> None:
         match msg:
             case KeyExchangeInitMessage():
-                print("Key Innit Msg")
+                self.logDebug("Key Innit Msg")
                 self.__key_handler.init_from_msg(msg)
                 msg = KeyExchangeResponseMessage(self.__key_handler.Y())
                 self.send_to_server(msg)
@@ -94,9 +95,9 @@ class ServerConnectionHandler:
                 dec_msg = self.encryptor().recreate_message(msg)
                 self.__handle_msg(dec_msg)
             case TextMessage():
-                print("Recived encryted: ", msg.get_msg())
+                self.logDebug("Recived encryted: ", msg.get_msg())
             case _:
-                print("Unhandled msg")
+                self.logInfo("Unhandled msg")
 
     def encryptor(self) -> EncryptMessageBuilder:
         return EncryptMessageBuilder(self.__key_handler.K(), self.__message_builder)
@@ -110,17 +111,17 @@ class ServerConnectionHandler:
         self.__socket.sendall(final_msg)
 
     def __listen(self):
-        print("Listening")
+        self.logInfo("Listening")
         try:
             while self.__running:
                 data = self.__socket.recv(ConnectionUtils.RECV_SIZE)
                 if not data:
-                    print("Disconected via server")
+                    self.logWarning("Disconected via server")
                     self.__running = False
                 else:
-                    print("Recieved ", data.__class__.__name__)
+                    self.logInfo("Recieved ", data.__class__.__name__)
                     self.__handle_msg_map(data)
 
         except KeyboardInterrupt as ex:
-            print(f"[ERROR] {ex}")
+            self.logError(f"{ex}")
             self._terminate()

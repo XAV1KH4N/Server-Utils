@@ -29,7 +29,7 @@ class MessageHandler(EventHandler, Logger):
     def handle_raw_data(self, raw_data, id: ConnectionID) -> None:
         self.logDebug("Raw data", raw_data)
         msg = self.__builder.rebuild_message(raw_data)
-        print("Msg", msg.__class__.__name__)
+        self.logInfo("Msg", msg.__class__.__name__)
         self.handle_msg(msg, id)
     
     def handle_msg(self, msg: Serializable, id: ConnectionID) -> bool: 
