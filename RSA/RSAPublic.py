@@ -4,7 +4,9 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import load_pem_public_key
 
-class RSAPublicHandler:
+from common.logging.Logger import Logger
+
+class RSAPublicHandler(Logger):
     def __init__(self, key):
         self.__public_key = key
 
@@ -20,7 +22,7 @@ class RSAPublicHandler:
             hashes.SHA256()
             )
         except KeyboardInterrupt as e:
-            print(e)
+            self.logError(e)
             return False
         
         return True

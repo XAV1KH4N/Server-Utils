@@ -58,46 +58,46 @@ class ServerSupport(ABC, Logger):
             if (data[Serializable.ClassName] == VerificationReponseMessage.__name__):
                 msg = VerificationReponseMessage(data)
                 self.__encrypt.markPost(msg.y)
-                self.("K", self.__encrypt.k())
+                self.logDebug("K", self.__encrypt.k())
             else:
-                print("Msg not expected")
+                self.logWarning("Msg not expected")
 
 
         elif (data[Serializable.ClassName] == UserLoginMessage.__name__):
             name = data[UserLoginMessage.NameProperty]
             password = data[UserLoginMessage.PassProperty]
             if name == "xavi" and password == "1234":
-                print("Login Successful")
+                self.logInfo("Login Successful")
                 self.__updateState(ConnectionStatus.VERIFIED)
             else:
-                print("Login Failed")
+                self.logInfo("Login Failed")
                 self.__updateState(ConnectionStatus.UNVERIFIED)
                 self.__attemptsLeft -= 1
 
     def __listen(self):
         with self._getConn():
-            print("With Connection")
+            self.logDebug("With Connection")
             try:
                 self.__sendVerificationMessage()
 
                 while self._isRunning():
                     data = self._conn.recv(1024)
-                    print("** Data", data)
+                    self.logDebug("** Data", data)
                     if not data:
                         self._disconnected()
                     else:
                         recievedData: dict = json.loads(data.decode(Common.ENCODE_TYPE))
-                        print("Status", self._status)
+                        self.logDebug("Status", self._status)
                         if self._status == ConnectionStatus.UNVERIFIED:
-                            print("pending data")
+                            self.logDebug("pending data")
                             self.__handlePendingData(recievedData)
                         elif self._status == ConnectionStatus.VERIFIED:
-                            print(f"Recieved: {recievedData}")
+                            self.logInfo(f"Recieved: {recievedData}")
                             self._handleData(recievedData)
                     self.__postCheck()
                             
             except KeyboardInterrupt as e:
-                print(f"\n[ERROR] Connection error with {self._getAddr()}: {e}")
+                self.logError(f"\nConnection error with {self._getAddr()}: {e}")
             finally:
                 self._running = False
             
@@ -115,15 +115,15 @@ class ServerSupport(ABC, Logger):
             try:
                 msg = input(f"Send to {self._getAddr()} -> ")
                 if msg.strip() and self._running:
-                    print(f"Sending {msg}")
+                    self.logInfo(f"Sending {msg}")
                     self._sendTextToClient(msg)
             except Exception as e:
                 break                
 
     def __sendVerificationMessage(self):
         msg = self.__encrypt.intialMessage()
-        print(msg)
-        print(msg.to_map())
+        self.logDebug(msg)
+        self.logDebug(msg.to_map())
         self._send_to_client(msg)
 
     def _send_to_client(self, msg: Serializable):
@@ -168,21 +168,21 @@ class TestServerSupport(ServerSupport): # Multiple server connection handlers, b
         return self._running
     
     def _disconnected(self):
-        print(f"\n[DISCONNECTED] Client {self._getAddr()} disconnected")
+        self.logError(f"\n[DISCONNECTED] Client {self._getAddr()} disconnected")
         self._running = False
 
-class ConnectionManager:
+class ConnectionManager(Logger):
     def __init__(self):
         self.connections = []
         self.__encrypt = EncryptSupport()
     
     def enqueue(self, conn, addr):
-        print(f"\n[NEW CONNECTION] {addr} connected.")
+        self.logInfo(f"\n[NEW CONNECTION] {addr} connected.")
         handler = TestServerSupport(conn, addr, self.__encrypt)
         self.connections.append(handler)
         handler.run()
 
-class Server:
+class Server(Logger):
     def __init__(self):
         self.manager = ConnectionManager()
 
@@ -192,17 +192,17 @@ class Server:
             s.bind((cg.Config.HOST, cg.Config.PORT))
             s.listen()
 
-            print(f'[SERVER STARTED] Always listening on {cg.Config.HOST}:{cg.Config.PORT}...')
+            self.logInfo(f'[SERVER STARTED] Always listening on {cg.Config.HOST}:{cg.Config.PORT}...')
 
             while True:
                 try:
                     conn, addr = s.accept() 
                     self.manager.enqueue(conn, addr)
                 except KeyboardInterrupt:
-                    print("\n[SHUTTING DOWN] Server shutting down manually.")
+                    self.logInfo("\n[SHUTTING DOWN] Server shutting down manually.")
                     break
                 except Exception as e:
-                    print(f"[SERVER ERROR] {e}")
+                    self.logError(f"[SERVER ERROR] {e}")
                     break
 
 if __name__ == "__main__":

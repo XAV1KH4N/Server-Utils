@@ -1,6 +1,7 @@
 from common.events.Events import Event, EventHandler, EventWithId
+from common.logging.Logger import Logger
 
-class EventBus:
+class EventBus(Logger):
     __INSTANCES = 0
 
     def __init__(self):
@@ -14,7 +15,7 @@ class EventBus:
         self.__handlers.remove(handler)
 
     def publish(self, event: Event) -> None:
-        print("Publish:", event.__class__.__name__)
+        self.logInfo("Publish:", event.__class__.__name__)
         for handler in self.__handlers:
             handler.on_change(event)
 

@@ -42,7 +42,7 @@ class Server(EventHandler, Logger): # Do all at once
     
     def __decrypt__message(self, msg: EncryptedMessage, id: ConnectionID) -> Serializable:
         enc_builder = self.__encryptor_for(id)
-        print("Msg cipher", msg.get_cipher())
+        self.logDebug("Msg cipher", msg.get_cipher())
         dec_msg = enc_builder.recreate_message(msg)
         return dec_msg
     
