@@ -2,8 +2,7 @@ import time
 
 class Logger:
 
-    def __init__(self):
-        self.__show_time = False
+    Show_time = False
 
     def logInfo(self, *args, **kwargs) -> None:
         self.__log("INFO", *args, **kwargs)
@@ -20,6 +19,6 @@ class Logger:
     def __log(self, level, *args, **kwargs) -> None:
         local = time.localtime()
         time_str = ""
-        if (self.__show_time):
-            f"{local.tm_hour}:{local.tm_min}:{local.tm_sec}"
-        print(f"[{level}] {time_str} - [{self.__class__.__name__}]", *args, **kwargs)
+        if (Logger.Show_time):
+            time_str = f" {local.tm_hour}:{local.tm_min}:{local.tm_sec}"
+        print(f"[{level}]{time_str} - [{self.__class__.__name__}]", *args, **kwargs)
