@@ -1,28 +1,12 @@
-Encryption
-- AES
-- Random number generation
-
-Login
-- Hashing + salt
-
-Event Bus
-- All events published to a bus/ queue
-- No need for origins/ desitnations, just listen to what you need to
-- Scales nicely
-- Move events to this - Needed since now events for one client will trigger every where. 
-- Then renme to event, and then eventWithoutId (Maybe for event specific stuff)
-- Remove origin + Destination
-
-Extra
-- Shouldmt the myenv be in the repo?
-
-Interface Sub class
-- Client project server / client, sendning messages + broadcasting
+Movie listen
+- File handler
+- Read all
+- Client read request
+- client add request
+- Client side add Movie
 
 Other
 - Purge connections when lost? From connection handler and key handler
-- logging (timetamps + class)
 - move sever to mongo or a seperate docket
-
-Message handler will recieve messages and wrap them in events - Never send serializable messages
-Make promises/ Futures? Send event and wait for reposne on thread? Need thread manager - tricky stuff. Deadlocks + race codnistions -> Careful
+- Login, Hashing + salt
+- Shouldmt the myenv be in the repo?
