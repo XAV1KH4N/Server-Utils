@@ -7,7 +7,7 @@ from Server.connections.ConnectionHandler import ConnectionHandler
 from Server.events.EncryptedMessageEvent import EncryptedMessageEvent
 from Server.handler.KeyExchangeHandler import KeyExchangeHandler
 from common.ConnectionUtils import ConnectionUtils
-from common.logging.Logger import Logger, log
+from common.logging.Logger import Logger
 from common.events.Events import Event, EventHandler
 from messages.common.Messages import EncryptedMessage
 from messages.common.Serializable import Serializable
@@ -47,13 +47,13 @@ class Server(EventHandler, Logger): # Do all at once
         return dec_msg
     
     def __listen_loop(self):
-        print("Entering Main Loop")
+        self.logInfo("Entering Main Loop")
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             s.bind((ConnectionUtils.HOST, ConnectionUtils.PORT))
             s.listen()
 
-            log(f'[SERVER STARTED] Listening on {ConnectionUtils.HOST}:{ConnectionUtils.PORT}...')
+            self.logInfo(f'[SERVER STARTED] Listening on {ConnectionUtils.HOST}:{ConnectionUtils.PORT}...')
 
             while True:
                 try:
@@ -61,7 +61,7 @@ class Server(EventHandler, Logger): # Do all at once
                     id = self._connection_handler.new_connection(conn, addr, self.__message_handler.get_builder())
                     self.__key_exchange_manager.initiate_new_connection(id)
                 except KeyboardInterrupt:
-                    log("[SHUTTING DOWN] Server shutting down manually.")
+                    self.logInfo("[SHUTTING DOWN] Server shutting down manually.")
                     break
                 #except Exception as e:
                 #    log(f"[SERVER ERROR] {e}")

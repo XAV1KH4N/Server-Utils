@@ -1,6 +1,7 @@
 import socket
 import json
 import threading
+from common.logging.Logger import Logger
 import config as cg
 from messages.common.Serializable import Serializable
 from messages.ConnectionStatus import ConnectionStatus
@@ -14,7 +15,7 @@ from RSA.RSAPrivate import *
 from RSA.RSAPublic import *
 from Server.EncryptSupport import *
 
-class ServerSupport(ABC):
+class ServerSupport(ABC, Logger):
     def __init__(self, encrypt: EncrpytConnectionSupport):
         self._status = ConnectionStatus.UNVERIFIED 
         self.__attemptsLeft = 3
@@ -57,7 +58,7 @@ class ServerSupport(ABC):
             if (data[Serializable.ClassName] == VerificationReponseMessage.__name__):
                 msg = VerificationReponseMessage(data)
                 self.__encrypt.markPost(msg.y)
-                print("K", self.__encrypt.k())
+                self.("K", self.__encrypt.k())
             else:
                 print("Msg not expected")
 

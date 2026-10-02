@@ -2,21 +2,21 @@ from Server.events.EncryptedMessageEvent import EncryptedMessageEvent
 from messages.common.KeyExchangeMessage import KeyExchangeResponseMessage
 from messages.common.MessageBuilder import MessageBuilder
 from Server.connections.ClientConnectionHandler import ClientMessageEvent, ConnectionID
-from common.logging.Logger import log
+from common.logging.Logger import Logger
 from common.events.EventBus import EventBus
 from common.events.Events import Event, EventWithId, EventHandler
 from messages.common.Messages import EncryptedMessage
 from messages.common.Serializable import Serializable
 from messages.common.TextMessage import TextMessage
 
-class MessageHandler(EventHandler):
+class MessageHandler(EventHandler, Logger):
     def __init__(self, event_bus: EventBus):
         self.__builder = self._create_message_builder()
         self.event_bus = event_bus
         self.event_bus.subscribe(self)
 
     def _create_message_builder(self) -> MessageBuilder:
-        print("WARN: Using default builder")
+        self.logWarning("WARN: Using default builder")
         return MessageBuilder()
 
     def on_change(self, event: Event) -> None:
@@ -27,7 +27,7 @@ class MessageHandler(EventHandler):
                 pass
 
     def handle_raw_data(self, raw_data, id: ConnectionID) -> None:
-        print("Raw data", raw_data)
+        self.logDebug("Raw data", raw_data)
         msg = self.__builder.rebuild_message(raw_data)
         print("Msg", msg.__class__.__name__)
         self.handle_msg(msg, id)
@@ -40,9 +40,9 @@ class MessageHandler(EventHandler):
             case EncryptedMessage():
                 self.event_bus.publish(EncryptedMessageEvent(msg, id))
             case TextMessage():
-                print("Encrypted Text Message", msg.get_msg())
+                self.logInfo("Encrypted Text Message", msg.get_msg())
             case _ :
-                log("Unhandled client message", msg.__class__.__name__) 
+                self.logInfo("Unhandled client message", msg.__class__.__name__) 
                 return False
         return True
 

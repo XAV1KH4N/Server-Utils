@@ -4,12 +4,12 @@ from client.events.ServerMessageEvent import ServerMessageEvent
 from common.events import KeyExchangeRecievedEvent
 from common.events.EventBus import EventBus
 from common.events.Events import Event, EventHandler
-from common.logging.Logger import log
+from common.logging.Logger import Logger
 from messages.common.KeyExchangeMessage import KeyExchangeInitMessage
 from messages.common.Serializable import Serializable
 from messages.common.MessageBuilder import MessageBuilder
 
-class MessageHandler(EventHandler):
+class MessageHandler(EventHandler, Logger):
     def __init__(self, event_bus: EventBus):
         self.__message_builder = MessageBuilder()
         self.event_bus = event_bus
@@ -20,16 +20,15 @@ class MessageHandler(EventHandler):
             case ServerMessageEvent():
                 self.__handle__server_msg(event.getMsg())
             case _ : 
-                log("Unexpected message recieved")
+                pass
 
     def __handle__server_msg(self, msg: Serializable) -> None:
         rebuilt_msg = self.__message_builder.extract_message(msg)
-        print("Rebuilt Msg", rebuilt_msg)
         match rebuilt_msg:
             case KeyExchangeInitMessage():
                 self.event_bus.publish(KeyExchangeRecievedEvent(msg))
             case _ : 
-                log("Unexpected server message")
+                self.logWarning("Unexpected server message", msg.to_map())
 
 class Client(ABC):
     def __init__(self):
