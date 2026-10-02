@@ -1,13 +1,14 @@
 from Server.connections.ConnectionHandler import ConnectionHandler
 from Server.handler.KeyExchangeHandler import KeyExchangeHandler
 from Server.serverModule import ServerBuilder, Server
-from common.events.Events import Event, EventOrigin
+from common.events.EventBus import EventBus
+from common.events.Events import Event
 from messages.common.TextMessage import TextMessage
 from teminal.server.CMDMessageHandler import BroadcastAllEvent, CMDMessageHandler
 
 class CMDServer(Server):
-    def __handle_event(self, event) -> bool:
-        handled = super().__handle_event(event)
+    def on_change(self, event: Event) -> bool:
+        handled = super().on_change(event)
         if (handled):
             return True
 
@@ -19,10 +20,11 @@ class CMDServer(Server):
 
 class CMDServerBuilder(ServerBuilder):
     def build(self) -> Server:
-        msg_handler = CMDMessageHandler()
-        conn_handler = CMDConnectionHandler()
-        key_handler = KeyExchangeHandler()
-        return Server(msg_handler, conn_handler, key_handler)
+        event_bus = EventBus()
+        msg_handler = CMDMessageHandler(event_bus)
+        conn_handler = CMDConnectionHandler(event_bus)
+        key_handler = KeyExchangeHandler(event_bus)
+        return Server(msg_handler, conn_handler, key_handler, event_bus)
 
 class CMDServerDriver:
     def start():
@@ -32,7 +34,9 @@ class CMDServerDriver:
 
 class CMDConnectionHandler(ConnectionHandler):
 
-    def handle_message_handler_event(self, event: Event) -> bool:
+    def on_change(self, event: Event):
+        super().on_change(event)
+
         if isinstance(event, BroadcastAllEvent):
             id = event.get_id()
             text = event.get_text()
@@ -41,9 +45,6 @@ class CMDConnectionHandler(ConnectionHandler):
             for conn in self._connections:
                 if not conn.is_id(id):
                     self._connections[conn].send_to_client(msg)
-            return True
-        else:
-            return False
 
 if __name__ == "__main__":
     CMDServerDriver.start()

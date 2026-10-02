@@ -1,6 +1,7 @@
 import socket
 import json
 import threading
+from common.logging.Logger import Logger
 import config as cg
 from Server.DecryptSupport import DecryptSupport
 from messages.common.Serializable import Serializable
@@ -13,7 +14,7 @@ from RSA.DiffeHellam import DiffeHellam
 from abc import ABC, abstractmethod
 import time
 
-class LoginSupport():
+class LoginSupport(Logger):
     MAX_ATTEMPTS = 3
     LOGIN_DELAY = 5
 
@@ -28,13 +29,11 @@ class LoginSupport():
             self.__status == ConnectionStatus.BLOCKED
 
     def handleData(self, data: dict):
-        print(f"[RECIVED] ## {data}")
-        print(data, data[Serializable.ClassName], UserLoginStatus.__name__)
+        self.logInfo(f"[RECIVED] ## {data}")
         if (data[Serializable.ClassName] == UserLoginStatus.__name__):
             status = data[UserLoginStatus.StatusProperty]
             self.__status = ConnectionStatus[status]
             self.failedLogin()
-            print("Updated", status, self.__status)
 
     def buildLoginMessage(self) -> UserLoginMessage:
         name = input("Name: ")
@@ -61,7 +60,7 @@ class LoginSupport():
     def isBlocked(self) -> bool:
         return self.__status == ConnectionStatus.BLOCKED
 
-class ClientSupport(ABC):
+class ClientSupport(ABC, Logger):
     def __init__(self, socket):
         self.__socket = socket
         self.__running = False
@@ -91,11 +90,11 @@ class ClientSupport(ABC):
         self.__mainLoop() # Fucking this shit
 
     def _serverDisconnect(self):
-        print("[DISCONNECTED] Serer closed the connection")
+        self.logInfo("[DISCONNECTED] Serer closed the connection")
         self.__running = False
 
     def _terminate(self):
-        print("[DISCONNECTED] Connection closed by client")
+        self.logInfo("[DISCONNECTED] Connection closed by client")
         self.__running = False
 
     def __handleUnverified(self, data: dict):
@@ -108,10 +107,11 @@ class ClientSupport(ABC):
             response = VerificationReponseMessage(yMod)
             self._sendToServer(response)
         else:
-            print("Unable to verify server")
+            self.logWarning("Unable to verify server")
 
     def __handleData(self, data: dict):
-        print(f"[RECIVED]")# {data}")
+        self.logInfo(f"[RECIVED]")
+        self.logDebug(f"{data}")
 
         if (not self.__decrypt.isSecure()):
             self.__handleUnverified(data)
@@ -123,7 +123,7 @@ class ClientSupport(ABC):
             while self.__running:
                 data = self.__socket.recv(Common.RECV_SIZE)
                 if not data:
-                    print("Disconnect")
+                    self.logInfo("[Disconnect]")
                     self._serverDisconnect()
                     break
                 else:

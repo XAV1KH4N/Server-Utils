@@ -1,18 +1,17 @@
-from random import Random
 import threading
 from common.events.ConnectionId import ConnectionID
-from common.events.Events import Event, EventOrigin, EventPublisher, EventDesitination, EventWithId
+from common.events.EventBus import EventBus
+from common.events.Events import EventWithId
 from messages.common.MessageBuilder import MessageBuilder
 from messages.common.Serializable import Serializable
 
-
-class ClientConnectionHandler(EventPublisher): 
-    def __init__(self, conn, addr, msg_builder: MessageBuilder):
+class ClientConnectionHandler: 
+    def __init__(self, conn, addr, msg_builder: MessageBuilder, event_bus: EventBus):
         self.__conn = conn
         self.__id = ConnectionID(addr)
         self.__is_running = True
         self.__message_builder = msg_builder
-        super().__init__()
+        self.__event_bus = event_bus
 
     def get_connection_id(self) -> ConnectionID:
         return self.__id
@@ -38,7 +37,7 @@ class ClientConnectionHandler(EventPublisher):
                         print("Connection terminated by peer")
                         self.__is_running = False
                     else:
-                        self.publish(ClientMessageEvent(data, self.__id))
+                        self.__event_bus.publish(ClientMessageEvent(data, self.__id))
             except KeyboardInterrupt:
                 print(f"\n[ERROR] Connection error with {self._getAddr()}:")
             finally:
@@ -54,11 +53,5 @@ class ClientMessageEvent(EventWithId):
     def get_data(self):
         return self.__data
     
-    def get_destination(self):
-        return EventDesitination.MESSAGE_HANDLER
-    
-    def get_origin(self):
-        return EventOrigin.COMMUNICATION_HANDLER
-
     def get_id(self) -> ConnectionID:
         return self.__id

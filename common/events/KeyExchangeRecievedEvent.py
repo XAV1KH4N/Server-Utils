@@ -1,4 +1,4 @@
-from common.events.Events import Event, EventDesitination, EventOrigin
+from common.events.Events import Event
 from messages.common.KeyExchangeMessage import KeyExchangeInitMessage
 
 class KeyExchangeRecievedEvent(Event):
@@ -7,9 +7,3 @@ class KeyExchangeRecievedEvent(Event):
 
     def get_key(self) -> KeyExchangeInitMessage:
         return self.__key
-    
-    def get_destination(self) -> EventDesitination:
-        return EventDesitination.KEY_EXCHANGE_HANDLER
-
-    def get_origin(self) -> EventOrigin:
-        return EventOrigin.MESSAGE_HANDLER

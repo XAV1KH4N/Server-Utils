@@ -2,43 +2,37 @@ from abc import ABC, abstractmethod
 from client.connections.ServerConnectionHandler import ServerConnectionHandler
 from client.events.ServerMessageEvent import ServerMessageEvent
 from common.events import KeyExchangeRecievedEvent
-from common.events.Events import Event, EventOrigin, EventPublisher
-from common.logging.Logger import log
+from common.events.EventBus import EventBus
+from common.events.Events import Event, EventHandler
+from common.logging.Logger import Logger
 from messages.common.KeyExchangeMessage import KeyExchangeInitMessage
 from messages.common.Serializable import Serializable
 from messages.common.MessageBuilder import MessageBuilder
-from messages.common.TextMessage import TextMessage
 
-class MessageHandler(EventPublisher):
-    def __init__(self):
+class MessageHandler(EventHandler, Logger):
+    def __init__(self, event_bus: EventBus):
         self.__message_builder = MessageBuilder()
-        super().__init__()
+        self.event_bus = event_bus
+        self.event_bus.subscribe(self)
 
-    def handle_event(self, event: Event):
-        match event.get_origin():
-            case EventOrigin.COMMUNICATION_HANDLER:
-                self.__handle_event(event)
-            case _ : 
-                log("Unexpected message")
-
-    def __handle_event(self, event: Event) -> None:
+    def on_change(self, event: Event):
         match event:
             case ServerMessageEvent():
                 self.__handle__server_msg(event.getMsg())
             case _ : 
-                log("Unexpected message recieved")
+                pass
 
     def __handle__server_msg(self, msg: Serializable) -> None:
         rebuilt_msg = self.__message_builder.extract_message(msg)
-        print("Rebuilt Msg", rebuilt_msg)
         match rebuilt_msg:
             case KeyExchangeInitMessage():
-                self.publish(KeyExchangeRecievedEvent(msg))
+                self.event_bus.publish(KeyExchangeRecievedEvent(msg))
             case _ : 
-                log("Unexpected server message")
+                self.logWarning("Unexpected server message", msg.to_map())
 
 class Client(ABC):
     def __init__(self):
+        self._event_bus = EventBus()
         self._connection_handler = ServerConnectionHandler()
 
     def start(self):

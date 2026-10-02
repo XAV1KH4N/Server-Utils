@@ -2,42 +2,32 @@ from Server.events.EncryptedMessageEvent import EncryptedMessageEvent
 from messages.common.KeyExchangeMessage import KeyExchangeResponseMessage
 from messages.common.MessageBuilder import MessageBuilder
 from Server.connections.ClientConnectionHandler import ClientMessageEvent, ConnectionID
-from common.logging.Logger import log
-from common.events.Events import Event, EventDesitination, EventOrigin, EventPublisher, EventWithId
-from messages.common.MessageBuilder import MessageBuilder
+from common.logging.Logger import Logger
+from common.events.EventBus import EventBus
+from common.events.Events import Event, EventWithId, EventHandler
 from messages.common.Messages import EncryptedMessage
 from messages.common.Serializable import Serializable
 from messages.common.TextMessage import TextMessage
-from teminal.common.messages.Broadcast import BroadcastMessage
 
-class MessageHandler(EventPublisher):
-    def __init__(self):
+class MessageHandler(EventHandler, Logger):
+    def __init__(self, event_bus: EventBus):
         self.__builder = self._create_message_builder()
-        super().__init__()
+        self.event_bus = event_bus
+        self.event_bus.subscribe(self)
 
     def _create_message_builder(self) -> MessageBuilder:
-        print("WARN: Using default builder")
+        self.logWarning("WARN: Using default builder")
         return MessageBuilder()
 
-    def handle_event(self, event: Event) -> None:
-        print("Event", event.__class__.__name__)
-        print(event.get_origin())
-        match event.get_origin():
-            case EventOrigin.COMMUNICATION_HANDLER:
-                print("Handling", event.__class__.__name__)
-                self.handle_communication_event(event)
-            case _ : 
-                 log("Unhanlded client message")
-
-    def handle_communication_event(self, event: Event) -> None:
+    def on_change(self, event: Event) -> None:
         match event:
             case ClientMessageEvent():
                 self.handle_raw_data(event.get_data(), event.get_id())
             case _ :
-                log("Unhandled client message event")
+                pass
 
     def handle_raw_data(self, raw_data, id: ConnectionID) -> None:
-        print("Raw data", raw_data)
+        self.logDebug("Raw data", raw_data)
         msg = self.__builder.rebuild_message(raw_data)
         print("Msg", msg.__class__.__name__)
         self.handle_msg(msg, id)
@@ -46,13 +36,13 @@ class MessageHandler(EventPublisher):
         match msg:
             case KeyExchangeResponseMessage():
                 other_y = msg.get_Y()               
-                self.publish(KeyExchangeResponseEvent(other_y, id))
+                self.event_bus.publish(KeyExchangeResponseEvent(other_y, id))
             case EncryptedMessage():
-                self.publish(EncryptedMessageEvent(msg, id))
+                self.event_bus.publish(EncryptedMessageEvent(msg, id))
             case TextMessage():
-                print("Encrypted Text Message", msg.get_msg())
+                self.logInfo("Encrypted Text Message", msg.get_msg())
             case _ :
-                log("Unhandled client message", msg.__class__.__name__) 
+                self.logInfo("Unhandled client message", msg.__class__.__name__) 
                 return False
         return True
 
@@ -70,9 +60,3 @@ class KeyExchangeResponseEvent(EventWithId):
 
     def get_y(self) -> int:
         return self.__Y
-
-    def get_destination(self) -> EventDesitination:
-        return EventDesitination.KEY_EXCHANGE_HANDLER
-
-    def get_origin(self) -> EventOrigin:
-        return EventOrigin.MESSAGE_HANDLER
