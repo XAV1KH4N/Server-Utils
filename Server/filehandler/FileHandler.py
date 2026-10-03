@@ -1,4 +1,4 @@
-import os
+import os, json
 
 class FileHandler:
 
@@ -23,3 +23,20 @@ class FileHandler:
 
     def full_file_path(self) -> str:
         return f"{self.__root_path}/{self.__file_name}.txt"
+
+    def write(self, text) -> None:
+        with open(f"{self.full_file_path()}", "w") as file:
+            file.write(text + "\n")
+
+    def append(self, text) -> None:
+        with open(f"{self.full_file_path()}", "a") as file:
+            file.write(text + "\n")
+
+    def read_raw(self) -> str:
+        text = ""
+        with open(f"{self.full_file_path()}", "r") as file:
+            text = file.read()
+        return text
+
+    def read(self) -> list[str]:
+        return self.read_raw().splitlines()

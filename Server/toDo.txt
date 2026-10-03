@@ -1,9 +1,18 @@
 Movie listen
-- File handler
-- Read all
-- Client read request
-- client add request
-- Client side add Movie
+- Movie cache manager
+- Move spec
+- Reads list of movies via json
+- list per account
+- Movie name + year (Maybe imdb id)
+- Add, remove, read movie
+- Event bus subscribe
+- Event for Add, remove
+- View requires direct request
+
+Async request - Do this before client side events
+- Send a request (with id)
+- Then get a reponse from the server, that carries the same id
+- Future.onsuccess?
 
 Other
 - Purge connections when lost? From connection handler and key handler
