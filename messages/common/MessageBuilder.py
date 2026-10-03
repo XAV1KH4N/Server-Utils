@@ -1,4 +1,5 @@
 from common.logging.Logger import Logger
+from messages.common.PingMessages import PingMessage, PongMessage
 from messages.common.TextMessage import TextMessage
 from messages.common.KeyExchangeMessage import KeyExchangeInitMessage, KeyExchangeResponseMessage
 from messages.common.Serializable import Serializable, SerializerBuilder
@@ -34,6 +35,10 @@ class MessageBuilder(SerializerBuilder, Logger):
                 return EncryptedMessage(msg_map)
             case TextMessage.__name__:
                 return TextMessage(msg_map)
+            case PingMessage.__name__:
+                return PingMessage(msg_map)
+            case PongMessage.__name__:
+                return PongMessage(msg_map)
             case _:
                 self.logInfo("Unexpected message wrapped") 
                 return None

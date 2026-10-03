@@ -1,4 +1,5 @@
 from Server.events.EncryptedMessageEvent import EncryptedMessageEvent
+from common.events.PingEvents import PingEvent
 from messages.common.KeyExchangeMessage import KeyExchangeResponseMessage
 from messages.common.MessageBuilder import MessageBuilder
 from Server.connections.ClientConnectionHandler import ClientMessageEvent, ConnectionID
@@ -6,6 +7,7 @@ from common.logging.Logger import Logger
 from common.events.EventBus import EventBus
 from common.events.Events import Event, EventWithId, EventHandler
 from messages.common.Messages import EncryptedMessage
+from messages.common.PingMessages import PingMessage
 from messages.common.Serializable import Serializable
 from messages.common.TextMessage import TextMessage
 
@@ -39,6 +41,8 @@ class MessageHandler(EventHandler, Logger):
                 self.event_bus.publish(KeyExchangeResponseEvent(other_y, id))
             case EncryptedMessage():
                 self.event_bus.publish(EncryptedMessageEvent(msg, id))
+            case PingMessage():
+                self.event_bus.publish(PingEvent(msg.get_request_id(), id))
             case TextMessage():
                 self.logInfo("Encrypted Text Message", msg.get_msg())
             case _ :

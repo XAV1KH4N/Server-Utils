@@ -11,7 +11,13 @@ class EventWithId(Event):
     @abstractmethod
     def get_id(self) -> ConnectionID:
         pass 
-        
+
+class EventWithRequest(Event):
+    
+    @abstractmethod
+    def get_request_id(self) -> str:
+        pass 
+
 class EventHandler(ABC):
 
     @abstractmethod

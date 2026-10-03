@@ -33,7 +33,7 @@ class MessageHandler(EventHandler, Logger):
 class Client(ABC):
     def __init__(self):
         self._event_bus = EventBus()
-        self._connection_handler = ServerConnectionHandler()
+        self._connection_handler = ServerConnectionHandler(self._event_bus)
 
     def start(self):
         self._connection_handler.with_connection(self.main_loop)
