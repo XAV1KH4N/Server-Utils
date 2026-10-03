@@ -1,16 +1,17 @@
 Movie listen
-- Movie cache manager
-- Move spec
-- Reads list of movies via json
-- list per account
-- Movie name + year (Maybe imdb id)
-- Add, remove, read movie
+- server + client
 - Event bus subscribe
 - Event for Add, remove
 - View requires direct request
 
 Async request - Do this before client side events
 - Send a request (with id)
+- need requests to be wrapped with an request id (randomly generated)
+- request id needs to be sent to the server
+- request id will have to be part of the event too
+- then include the request id as part of the reponse event
+- then include the request in the response message
+- then whatever sent the request will be subscribed and wait fot he resonse message. response required message will be in pairs, reposne and request messages
 - Then get a reponse from the server, that carries the same id
 - Future.onsuccess?
 
