@@ -11,23 +11,6 @@ class CMDMessageHandler(MessageHandler):
     def _create_message_builder(self) -> MessageBuilder:
         return CMDMessageBuilder()
 
-    def extract_message(self, message: Message) -> Serializable:        
-        self.logInfo("Extract messge (CMD)")
-        msg = super().extract_message(message)
-
-        if (msg != None):
-            self.logInfo("Returned early, found message (CMD)")
-            return msg
-
-        msg_map = message.get_msg_map()
-        
-        match message.get_class_name():
-            case BroadcastMessage.__name__:
-                return BroadcastMessage(msg_map)
-            case _:
-                self.logError("Unexpected message wrapped (CMD)") 
-                return None
-
     def handle_msg(self, msg: Serializable, id: ConnectionID):
         handled = super().handle_msg(msg, id)
 

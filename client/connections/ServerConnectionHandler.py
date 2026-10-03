@@ -47,19 +47,20 @@ class ClientSideKeyExchangeHandler(KeyExchangeSupport, Logger):
         return reader.handler()
 
 class ServerConnectionHandler(Logger, EventHandler):
-    def __init__(self, event_bus: EventBus):
+    def __init__(self, event_bus: EventBus, message_builder ):
         self.__socket = None
         self.__running = False
         self.__is_verified = False
-        self.__pinged = False
-        self.__message_builder = MessageBuilder()
+        self._pinged = False
+        self.__message_builder = message_builder
         self.__key_handler = ClientSideKeyExchangeHandler(91)
-        self.__event_bus = event_bus
+        self._event_bus = event_bus
         event_bus.subscribe(self)   
         self.__watching: list[RequestWorker] = []
 
     def on_change(self, event: Event) -> None:
         for worker in self.__watching:
+            self.logDebug("Comapre", event, isinstance(event, EventWithRequest))
             if (isinstance(event, EventWithRequest)):
                 event.get_request_id() == worker.get_request()
                 if (isinstance(event, worker.response_event_type())):
@@ -77,10 +78,12 @@ class ServerConnectionHandler(Logger, EventHandler):
                 self.__socket = s
                 self.__run_in_background()
 
+                self.logDebug("Waiting on verification")
                 while not self.__is_verified:
                     pass
 
-                while not self.__pinged:
+                self.logDebug("Waiting on pong")
+                while not self._pinged:
                     pass
 
                 self.logInfo("Verified, Starting main loop")
@@ -101,22 +104,22 @@ class ServerConnectionHandler(Logger, EventHandler):
     def __handle_msg_map(self, data: bytes) -> None:
         msg = self.__message_builder.rebuild_message(data)
         self.logInfo("Handling Msg Map", msg)
-        self.__handle_msg(msg)
+        self._handle_msg(msg)
 
-    def __handle_msg(self, msg: Serializable) -> None:
+    def _handle_msg(self, msg: Serializable) -> None:
         match msg:
             case KeyExchangeInitMessage():
                 self.logDebug("Key Innit Msg")
                 self.__key_handler.init_from_msg(msg)
+                self.__is_verified = True
                 msg = KeyExchangeResponseMessage(self.__key_handler.Y())
                 self.send_to_server(msg)
                 self.__ping()
-                self.__is_verified = True
             case EncryptedMessage():
                 dec_msg = self.encryptor().recreate_message(msg)
-                self.__handle_msg(dec_msg)
+                self._handle_msg(dec_msg)
             case PongMessage():
-                self.__event_bus.publish(PongEvent(msg.get_request_id()))     
+                self._event_bus.publish(PongEvent(msg.get_request_id()))     
             case TextMessage():
                 self.logDebug("Recived encryted: ", msg.get_msg())
             case _:
@@ -127,7 +130,14 @@ class ServerConnectionHandler(Logger, EventHandler):
 
     def request_to_worker(self, worker: RequestWorker) -> None:
         msg = worker.get_request()
-        final_msg = self.__message_builder.build_message_bytes(msg)
+        if (self.__is_verified):
+            self.logInfo("Sending encrypted request")
+            final_msg = self.__message_builder.build_encrypted_message_bytes(msg, self.encryptor())
+        else:
+            final_msg = self.__message_builder.build_message_bytes(msg)
+            self.logWarning("Sending unencrypted request")
+
+        self.__watching.append(worker)
         self.__socket.sendall(final_msg)
 
     def send_to_server(self, msg: Serializable) -> None:
@@ -166,7 +176,9 @@ class ServerConnectionHandler(Logger, EventHandler):
 
             def on_complete(inner_self, result: PongEvent) -> None:
                 self.logInfo("Recieved Pong")
-                self.__ping = True
+                print(self._pinged)
+                self._pinged = True
+                print(self._pinged)
 
             def on_failure(inner_self) -> None:
                 self.logError("Failed to recieve Pong")

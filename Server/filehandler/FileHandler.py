@@ -1,6 +1,8 @@
 import os, json
 
-class FileHandler:
+from common.logging.Logger import Logger
+
+class FileHandler(Logger):
 
     def __init__(self, file_name: str) -> None:
         self.__file_name = file_name
@@ -8,7 +10,9 @@ class FileHandler:
         self.init_file()
 
     def init_file(self) -> None:
+        self.logInfo("File Path", self.full_file_path())
         if (not self.file_exists()):
+            self.logInfo("Creating file", self.full_file_path())
             with open(f"{self.full_file_path()}", "w") as file:
                 file.write("")        
 
