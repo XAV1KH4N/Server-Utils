@@ -47,7 +47,7 @@ class ClientSideKeyExchangeHandler(KeyExchangeSupport, Logger):
         return reader.handler()
 
 class ServerConnectionHandler(Logger, EventHandler):
-    def __init__(self, event_bus: EventBus, message_builder ):
+    def __init__(self, event_bus: EventBus, message_builder):
         self.__socket = None
         self.__running = False
         self.__is_verified = False
