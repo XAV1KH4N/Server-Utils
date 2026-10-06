@@ -4,6 +4,7 @@ from common.RequestWorker import RequestWorker
 from common.events.PingEvents import PongEvent
 from common.events.EventBus import EventBus
 from common.events.Events import Event, EventHandler, EventWithRequest
+from common.events.EventBus import EventBus
 from common.logging.Logger import Logger
 from messages.common.PingMessages import PingMessage, PongMessage
 from messages.common.TextMessage import TextMessage
@@ -188,7 +189,6 @@ class ServerConnectionHandler(Logger, EventHandler):
             self.logError(f"{ex}")
             self._terminate()
 
-    
     def __ping(self) -> None:
 
         class PingWorker(RequestWorker):
@@ -209,3 +209,47 @@ class ServerConnectionHandler(Logger, EventHandler):
 
         self.logInfo("Sending Ping")
         self.request_to_worker(PingWorker())
+
+
+class WebServerConnectionHandler(Logger):
+    def __init__(self, send_to_server):
+        self.__is_verified = False
+        self.__message_builder = MessageBuilder()
+        self.__key_handler = ClientSideKeyExchangeHandler(91)
+        self.__send_raw = send_to_server
+
+    def is_running(self) -> bool: 
+        return self.__running
+
+    def handle_msg_map(self, data: bytes) -> None:
+        msg = self.__message_builder.rebuild_message(data)
+        self.logInfo("Handling Msg Map", msg)
+        self.__handle_msg(msg)
+
+    def __handle_msg(self, msg: Serializable) -> None:
+        match msg:
+            case KeyExchangeInitMessage():
+                self.logDebug("Key Innit Msg")
+                self.__key_handler.init_from_msg(msg)
+                msg = KeyExchangeResponseMessage(self.__key_handler.Y())
+                self.send_to_server(msg)
+                self.send_to_server_encrypted(TextMessage("Hello"))
+                self.__is_verified = True
+            case EncryptedMessage():
+                dec_msg = self.encryptor().recreate_message(msg)
+                self.__handle_msg(dec_msg)
+            case TextMessage():
+                self.logDebug("Recived encryted: ", msg.get_msg())
+            case _:
+                self.logInfo("Unhandled msg")
+
+    def encryptor(self) -> EncryptMessageBuilder:
+        return EncryptMessageBuilder(self.__key_handler.K(), self.__message_builder)
+
+    def send_to_server(self, msg: Serializable) -> None:
+        final_msg = self.__message_builder.build_message_bytes(msg)
+        self.__send_raw(final_msg)
+
+    def send_to_server_encrypted(self, msg: Serializable) -> None:
+        final_msg = self.__message_builder.build_encrypted_message_bytes(msg, self.encryptor())
+        self.__send_raw(final_msg)
