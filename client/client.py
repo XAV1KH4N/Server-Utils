@@ -9,6 +9,27 @@ from messages.common.KeyExchangeMessage import KeyExchangeInitMessage
 from messages.common.Serializable import Serializable
 from messages.common.MessageBuilder import MessageBuilder
 
+class MessageHandler(EventHandler, Logger):
+    def __init__(self, event_bus: EventBus, message_builder: MessageBuilder):
+        self.__message_builder = message_builder
+        self.event_bus = event_bus
+        self.event_bus.subscribe(self)
+
+    def on_change(self, event: Event):
+        match event:
+            case ServerMessageEvent():
+                self.__handle__server_msg(event.getMsg())
+            case _ : 
+                pass
+
+    def __handle__server_msg(self, msg: Serializable) -> None:
+        rebuilt_msg = self.__message_builder.extract_message(msg)
+        match rebuilt_msg:
+            case KeyExchangeInitMessage():
+                self.event_bus.publish(KeyExchangeRecievedEvent(msg))
+            case _ : 
+                self.logWarning("Unexpected server message", msg.to_map())
+
 class Client(ABC, Logger):
     def __init__(self):
         self._event_bus = EventBus()

@@ -47,7 +47,7 @@ class ClientSideKeyExchangeHandler(KeyExchangeSupport, Logger):
         return reader.handler()
 
 class ServerConnectionHandler(Logger, EventHandler):
-    def __init__(self, event_bus: EventBus, message_builder):
+    def __init__(self, event_bus: EventBus, message_builder ):
         self.__socket = None
         self.__running = False
         self.__is_verified = False
@@ -93,6 +93,30 @@ class ServerConnectionHandler(Logger, EventHandler):
             self.logError("Could not connect to server")
         except KeyboardInterrupt:
             self.logInfo("\nForce quitting...")
+
+    def persist_connection(self, main_loop) -> bool:
+        try:
+            self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.__socket.connect((ConnectionUtils.HOST, ConnectionUtils.PORT))
+
+            self.__run_in_background()
+
+            self.logDebug("Waiting on verification")
+            while not self.__is_verified:
+                pass
+
+            self.logDebug("Waiting on pong")
+            while not self._pinged:
+                pass
+
+            self.logInfo("Verified, Starting main loop")
+            main_loop()
+
+        except ConnectionRefusedError:
+            self.logError("Could not connect to server")
+        except KeyboardInterrupt:
+            self.logInfo("\nForce quitting...")
+
 
     def __run_in_background(self):
         self.__running = True

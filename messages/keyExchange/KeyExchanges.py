@@ -33,5 +33,4 @@ class KeyExchangeSupport(Logger):
     
     def K(self) -> int:
         k =  pow(self._other_Y, self._y, self._prime)   
-        self.logInfo("k", k, "prime", self._prime, "base", self._base, "y", self._y, "Other y", self._other_Y)
         return k
