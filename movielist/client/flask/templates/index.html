@@ -1,0 +1,25 @@
+<html>
+    <h1>Movie Page {{ config.get_movies_str() }} </h1>
+
+    <br>
+    <form method="POST" action="{{ url_for('MovieWebClient:add_movie') }}">
+        <select name="username" id="selectvalue">
+            {% for user in config.get_usernames() %}
+            <option value="{{ user }}">{{ user }}</option>
+            {% endfor %}
+        </select>
+
+        <input name="movie_name">
+        <input type="submit">
+    </form>
+
+    <form method="POST" action="{{ url_for('MovieWebClient:delete_movie') }}">
+        <input name="text">
+        <input type="submit">
+    </form>
+
+    <br>
+    {% for movie in config.get_movies() %}
+        <li>{{ movie.get_movie().get_name() }}</li>
+    {% endfor %}
+</html>
