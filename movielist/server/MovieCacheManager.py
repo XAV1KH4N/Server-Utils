@@ -24,9 +24,16 @@ class MovieCacheManager:
     def remove_entry(self, movie: MovieEntry) -> None:
         if movie in self.__entries:
             self.__entries.remove(movie)
+            self.write_to_file()
             return True
         else:
             return False
+
+    def remove_entry_by_name(self, movie_name: str) -> None:
+        before = self.__entries
+        self.__entries = [entry for entry in self.__entries if entry.get_movie().get_name() != movie_name]
+        self.write_to_file()
+        return before != self.__entries
 
     def add_entry(self, movie: MovieEntry) -> None:
         self.__entries.append(movie)
