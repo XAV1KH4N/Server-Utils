@@ -1,4 +1,5 @@
 import json
+from random import Random
 from Server.filehandler.FileHandler import FileHandler
 from movielist.common.Movie import Movie, MovieEntry
 
@@ -38,6 +39,15 @@ class MovieCacheManager:
     def add_entry(self, movie: MovieEntry) -> None:
         self.__entries.append(movie)
         self.write_to_file()
+
+    def get_random_entry(self, username: None | str = None) -> MovieEntry:
+        rand = Random()
+        if (username == None):
+            print(self.__entries)
+            return rand.choice(self.__entries)
+        else:
+            filtered = [e for e in self.__entries if e.get_username() == username]
+            return rand.choice(filtered)
 
     def get_entries(self) -> list[MovieEntry]:
         return self.__entries

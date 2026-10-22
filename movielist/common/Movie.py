@@ -51,6 +51,9 @@ class MovieEntry:
     def get_movie(self) -> Movie:
         return self.__movie
 
+    def get_movie_name(self):
+        return self.__movie.get_name()
+
     def get_username(self) -> str:
         return self.__username
 
