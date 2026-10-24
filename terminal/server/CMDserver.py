@@ -5,7 +5,7 @@ from common.events.EventBus import EventBus
 from common.events.Events import Event
 from common.logging.Logger import Logger
 from messages.common.TextMessage import TextMessage
-from teminal.server.CMDMessageHandler import BroadcastAllEvent, CMDMessageHandler
+from terminal.server.CMDMessageHandler import BroadcastAllEvent, CMDMessageHandler
 
 class CMDServer(Server):
     def on_change(self, event: Event) -> bool:

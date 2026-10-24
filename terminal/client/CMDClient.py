@@ -1,7 +1,7 @@
 from common.logging.Logger import Logger
 from messages.common.TextMessage import TextMessage
 from client.client import Client
-from teminal.common.messages.Broadcast import BroadcastMessage
+from terminal.common.messages.Broadcast import BroadcastMessage
 
 class CMDClient(Client, Logger):
     def __init__(self):

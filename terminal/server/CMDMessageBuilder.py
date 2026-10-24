@@ -2,7 +2,7 @@ from common.logging.Logger import Logger
 from messages.common.MessageBuilder import MessageBuilder
 from messages.common.Messages import Message
 from messages.common.Serializable import Serializable
-from teminal.common.messages.Broadcast import BroadcastMessage
+from terminal.common.messages.Broadcast import BroadcastMessage
 
 class CMDMessageBuilder(MessageBuilder, Logger):
     def extract_message(self, message: Message) -> Serializable:

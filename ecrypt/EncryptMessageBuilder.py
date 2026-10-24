@@ -17,6 +17,7 @@ class EncryptMessageBuilder(Logger):
 
     def build_message(self, msg: Serializable) -> EncryptedMessage:
         msg_map = msg.to_map()
+        self.logDebug("Msg Map", msg_map, type(msg))
         json_data = json.dumps(msg_map).encode(EncryptUtils.ENCODE_TYPE)
         json_enctyped = self.__encrypt(json_data)
         class_name = type(msg).__name__

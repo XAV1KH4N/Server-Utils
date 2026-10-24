@@ -1,6 +1,11 @@
-Encryption
-- AES
-- Random number generation
+Movie listen
+- server + client
+- Event bus subscribe
+- Event for Add, remove
+- View requires direct request
+
+Web
+- just send msg to server (text)
 
 Login
 - Hashing + salt
@@ -21,8 +26,6 @@ Interface Sub class
 
 Other
 - Purge connections when lost? From connection handler and key handler
-- logging (timetamps + class)
 - move sever to mongo or a seperate docket
-
-Message handler will recieve messages and wrap them in events - Never send serializable messages
-Make promises/ Futures? Send event and wait for reposne on thread? Need thread manager - tricky stuff. Deadlocks + race codnistions -> Careful
+- Login, Hashing + salt
+- Shouldmt the myenv be in the repo?

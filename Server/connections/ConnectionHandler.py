@@ -1,10 +1,12 @@
 from Server.connections.ClientConnectionHandler import ClientConnectionHandler, ConnectionID 
 from Server.handler.KeyExchangeHandler import KeyExchangeStartEvent
+from common.events.PingEvents import PingEvent
 from common.logging.Logger import Logger
 from common.events.EventBus import EventBus
-from common.events.Events import Event, EventHandler
+from common.events.Events import Event
 from messages.common.KeyExchangeMessage import KeyExchangeInitMessage
 from messages.common.MessageBuilder import MessageBuilder
+from messages.common.PingMessages import PongMessage
 
 class ConnectionHandler(Logger):
     def __init__(self, event_bus: EventBus):
@@ -26,6 +28,10 @@ class ConnectionHandler(Logger):
                 key_data = event.get_data()
                 id = event.get_id()
                 msg = KeyExchangeInitMessage(key_data)
+                self._connections[id].send_to_client(msg)
+            case PingEvent():
+                msg = PongMessage(event.get_request_id())
+                id = event.get_id()
                 self._connections[id].send_to_client(msg)
             case _:
                 pass

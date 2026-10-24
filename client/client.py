@@ -10,8 +10,8 @@ from messages.common.Serializable import Serializable
 from messages.common.MessageBuilder import MessageBuilder
 
 class MessageHandler(EventHandler, Logger):
-    def __init__(self, event_bus: EventBus):
-        self.__message_builder = MessageBuilder()
+    def __init__(self, event_bus: EventBus, message_builder: MessageBuilder):
+        self.__message_builder = message_builder
         self.event_bus = event_bus
         self.event_bus.subscribe(self)
 
@@ -30,13 +30,17 @@ class MessageHandler(EventHandler, Logger):
             case _ : 
                 self.logWarning("Unexpected server message", msg.to_map())
 
-class Client(ABC):
+class Client(ABC, Logger):
     def __init__(self):
         self._event_bus = EventBus()
-        self._connection_handler = ServerConnectionHandler()
+        self._connection_handler: ServerConnectionHandler = self.create_connection_handler()
 
     def start(self):
         self._connection_handler.with_connection(self.main_loop)
+
+    def create_connection_handler(self) -> None:
+        self.logWarning("Using default connection handler")
+        return ServerConnectionHandler(self._event_bus, MessageBuilder())
 
     @abstractmethod
     def main_loop(self) -> None:
